@@ -1,0 +1,6 @@
+[submodule "glfw"]
+	path = glfw
+	url = ../glfw.git
+[submodule "nanovg"]
+	path = nanovg
+	url = ../nanovg.git
