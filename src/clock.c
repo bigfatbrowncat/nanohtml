@@ -82,19 +82,12 @@ int blowup = 0;
 int screenshot = 0;
 int premult = 0;
 
-static void key(GLFWwindow* window, int key, int scancode, int action, int mods)
-{
-	NVG_NOTUSED(scancode);
-	NVG_NOTUSED(mods);
-	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
-		glfwSetWindowShouldClose(window, GL_TRUE);
-	if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
-		blowup = !blowup;
-	if (key == GLFW_KEY_S && action == GLFW_PRESS)
-		screenshot = 1;
-	if (key == GLFW_KEY_P && action == GLFW_PRESS)
-		premult = !premult;
-}
+GLFWwindow* window;
+NVGcontext* vg = NULL;
+int fbWidth, fbHeight;
+int winWidth, winHeight;
+float pxRatio;
+double fps = 25.0;
 
 void drawTextCenter(NVGcontext* vg, char* text, int x, int y) {
 	float bounds[4];
@@ -309,11 +302,52 @@ void drawClock(NVGcontext* vg, int screenWidth, int screenHeight) {
 	nvgRestore(vg);
 }
 
+static void key(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+	NVG_NOTUSED(scancode);
+	NVG_NOTUSED(mods);
+	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+		glfwSetWindowShouldClose(window, GL_TRUE);
+	if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
+		blowup = !blowup;
+	if (key == GLFW_KEY_S && action == GLFW_PRESS)
+		screenshot = 1;
+	if (key == GLFW_KEY_P && action == GLFW_PRESS)
+		premult = !premult;
+}
+
+static void draw()
+{
+	glfwGetWindowSize(window, &winWidth, &winHeight);
+	glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
+
+	// Calculate pixel ration for hi-dpi devices.
+	pxRatio = (float)fbWidth / (float)winWidth;
+
+	// Update and render
+	glViewport(0, 0, fbWidth, fbHeight);
+	glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
+
+	nvgBeginFrame(vg, winWidth, winHeight, pxRatio);
+
+	double t1 = glfwGetTime();
+	drawClock(vg, winWidth, winHeight);
+	double t2 = glfwGetTime();
+
+	usleep(fmax((1.0 / fps - (t2 - t1)) * 1000000, 0));
+	nvgEndFrame(vg);
+
+	glfwSwapBuffers(window);
+}
+
+static void windowSize(GLFWwindow* window, int width, int height)
+{
+	draw();
+}
 
 int main()
 {
-	GLFWwindow* window;
-	NVGcontext* vg = NULL;
 
 	if (!glfwInit()) {
 		printf("Failed to init GLFW.");
@@ -345,6 +379,7 @@ int main()
 	}
 
 	glfwSetKeyCallback(window, key);
+	glfwSetWindowSizeCallback(window, windowSize);
 
 	glfwMakeContextCurrent(window);
     if (!glInit())
@@ -369,40 +404,17 @@ int main()
 
 	glfwSetTime(0);
 
-	double fps = 25.0;
 	nvgCreateFont(vg, "bold", "fonts/Walkway_Bold.ttf");
 	nvgCreateFont(vg, "black", "fonts/Walkway_Black.ttf");
 
 	while (!glfwWindowShouldClose(window))
 	{
 		double mx, my, t, dt;
-		int winWidth, winHeight;
-		int fbWidth, fbHeight;
-		float pxRatio;
 
 		glfwGetCursorPos(window, &mx, &my);
-		glfwGetWindowSize(window, &winWidth, &winHeight);
-		glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
 
-		// Calculate pixel ration for hi-dpi devices.
-		pxRatio = (float)fbWidth / (float)winWidth;
-
-		// Update and render
-		glViewport(0, 0, fbWidth, fbHeight);
-		glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
-
-		nvgBeginFrame(vg, winWidth, winHeight, pxRatio);
-
-		double t1 = glfwGetTime();
-		drawClock(vg, winWidth, winHeight);
-		double t2 = glfwGetTime();
-
-		usleep(fmax((1.0 / fps - (t2 - t1)) * 1000000, 0));
-
-		nvgEndFrame(vg);
-
-		glfwSwapBuffers(window);
+		draw();
+		
 		glfwPollEvents();
 	}
 
