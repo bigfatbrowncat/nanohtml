@@ -1,4 +1,7 @@
 #include <stdio.h>
+#include <time.h>
+#include <unistd.h>
+#include <stdbool.h>
 
 #include <GL3/gl3w.h>
 
@@ -8,9 +11,6 @@
 #include <nanovg.h>
 #define NANOVG_GL3_IMPLEMENTATION
 #include <nanovg_gl.h>
-
-#include <time.h>
-#include <unistd.h>
 
 void getGlVersion(int *major, int *minor)
 {
@@ -55,12 +55,12 @@ void getGlslVersion(int *major, int *minor)
     }
 }
 
-BOOL glInit()
+bool glInit()
 {
     if (gl3wInit())
     {
         printf("Problem initializing OpenGL\n");
-        return FALSE;
+        return false;
     }
 
     int maj, min, slmaj, slmin;
@@ -70,7 +70,7 @@ BOOL glInit()
     printf("OpenGL version: %d.%d\n", maj, min);
     printf("GLSL version: %d.%d\n", slmaj, slmin);
 
-    return 1;
+    return true;
 }
 
 void errorcb(int error, const char* desc)
@@ -322,8 +322,18 @@ int main()
 
 	glfwSetErrorCallback(errorcb);
 
+#ifdef __APPLE__
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
+	
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+#else
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+#endif
+	
+	
 #ifdef DEMO_MSAA
 	glfwWindowHint(GLFW_SAMPLES, 4);
 #endif
