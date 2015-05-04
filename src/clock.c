@@ -1,14 +1,77 @@
 #include <stdio.h>
-#ifdef NANOVG_GLEW
-#  include <GL/glew.h>
-#endif
+
+#include <GL3/gl3w.h>
+
+#define GLFW_INCLUDE_GLCOREARB
 #include <GLFW/glfw3.h>
+
 #include <nanovg.h>
-#define NANOVG_GL2_IMPLEMENTATION
+#define NANOVG_GL3_IMPLEMENTATION
 #include <nanovg_gl.h>
 
 #include <time.h>
 #include <unistd.h>
+
+void getGlVersion(int *major, int *minor)
+{
+    const char *verstr = (const char *) glGetString(GL_VERSION);
+    if ((verstr == NULL) || (sscanf(verstr,"%d.%d", major, minor) != 2))
+    {
+        *major = *minor = 0;
+        fprintf(stderr, "Invalid GL_VERSION format!!!\n");
+    }
+}
+
+void getGlslVersion(int *major, int *minor)
+{
+    int gl_major, gl_minor;
+    getGlVersion(&gl_major, &gl_minor);
+
+    *major = *minor = 0;
+    if (gl_major == 1)
+    {
+        /* GL v1.x can only provide GLSL v1.00 as an extension */
+        const char *extstr = (const char *) glGetString(GL_EXTENSIONS);
+        if ((extstr != NULL) &&
+            (strstr(extstr, "GL_ARB_shading_language_100") != NULL))
+        {
+            *major = 1;
+            *minor = 0;
+        }
+    }
+    else if (gl_major >= 2)
+    {
+        /* GL v2.0 and greater must parse the version string */
+        const char *verstr =
+            (const char *) glGetString(GL_SHADING_LANGUAGE_VERSION);
+
+        if((verstr == NULL) ||
+            (sscanf(verstr, "%d.%d", major, minor) != 2))
+        {
+            *major = *minor = 0;
+            fprintf(stderr,
+                "Invalid GL_SHADING_LANGUAGE_VERSION format!!!\n");
+        }
+    }
+}
+
+BOOL glInit()
+{
+    if (gl3wInit())
+    {
+        printf("Problem initializing OpenGL\n");
+        return FALSE;
+    }
+
+    int maj, min, slmaj, slmin;
+    getGlVersion(&maj, &min);
+    getGlslVersion(&slmaj, &slmin);
+
+    printf("OpenGL version: %d.%d\n", maj, min);
+    printf("GLSL version: %d.%d\n", slmaj, slmin);
+
+    return 1;
+}
 
 void errorcb(int error, const char* desc)
 {
@@ -259,7 +322,7 @@ int main()
 
 	glfwSetErrorCallback(errorcb);
 
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
 #ifdef DEMO_MSAA
 	glfwWindowHint(GLFW_SAMPLES, 4);
@@ -274,17 +337,18 @@ int main()
 	glfwSetKeyCallback(window, key);
 
 	glfwMakeContextCurrent(window);
-#ifdef NANOVG_GLEW
-    if(glewInit() != GLEW_OK) {
-		printf("Could not init glew.\n");
+    if (!glInit())
+    {
+		printf("Error: can't initialize GL3 API\n");
+		glfwTerminate();
 		return -1;
-	}
-#endif
 
+    }
+	
 #ifdef DEMO_MSAA
-	vg = nvgCreateGL2(NVG_STENCIL_STROKES | NVG_DEBUG);
+	vg = nvgCreateGL3(NVG_STENCIL_STROKES | NVG_DEBUG);
 #else
-	vg = nvgCreateGL2(NVG_ANTIALIAS | NVG_STENCIL_STROKES | NVG_DEBUG);
+	vg = nvgCreateGL3(NVG_ANTIALIAS | NVG_STENCIL_STROKES | NVG_DEBUG);
 #endif
 	if (vg == NULL) {
 		printf("Could not init nanovg.\n");
@@ -332,7 +396,7 @@ int main()
 		glfwPollEvents();
 	}
 
-	nvgDeleteGL2(vg);
+	nvgDeleteGL3(vg);
 
 	glfwTerminate();
 	return 0;
