@@ -1,16 +1,24 @@
 cmake_minimum_required (VERSION 2.8)
 
-set(PROJNAME "AlphaClock")
+set(PROJNAME "nanohtml")
+
+file(GLOB FONTS "${CMAKE_CURRENT_SOURCE_DIR}/fonts/*.ttf")
+
+file(GLOB MAIN_SOURCES_C "${CMAKE_CURRENT_SOURCE_DIR}/src/*.c")
+file(GLOB MAIN_SOURCES_CPP "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
+file(GLOB LITEHTML_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/litehtml/src/*.cpp")
+file(GLOB LITEHTML_GUMBO_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/litehtml/src/gumbo/*.c")
 
 set(ALLRESOURCES 
-	"fonts/Walkway_Black.ttf"
-	"fonts/Walkway_Bold.ttf"
+	${FONTS}
 )
 
 set(SOURCES
-	"src/clock.c" 
-	"src/gl3w.cpp"
+	${MAIN_SOURCES_C}
+	${MAIN_SOURCES_CPP}
 	"${CMAKE_CURRENT_SOURCE_DIR}/nanovg/src/nanovg.c" 
+	${LITEHTML_SOURCES}
+	${LITEHTML_GUMBO_SOURCES}
 )
 
 project (${PROJNAME})
@@ -28,7 +36,7 @@ IF(APPLE)
 	    PROPERTIES
     		MACOSX_PACKAGE_LOCATION Resources/fonts
   	)
-  	set(MACOSX_BUNDLE_BUNDLE_NAME "Alpha Clock")
+  	set(MACOSX_BUNDLE_BUNDLE_NAME "nanohtml")
   	
 ELSE()
 	add_executable(
@@ -43,6 +51,7 @@ ENDIF(APPLE)
 include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}/src 
 	${CMAKE_CURRENT_SOURCE_DIR}/include
+	${CMAKE_CURRENT_SOURCE_DIR}/litehtml/include
 	${CMAKE_CURRENT_SOURCE_DIR}/nanovg/src
 	${CMAKE_CURRENT_SOURCE_DIR}/glfw/include
 )
@@ -54,6 +63,7 @@ include_directories(
 add_subdirectory("glfw")
 
 SET(CMAKE_C_FLAGS "-std=gnu99")
+SET(CMAKE_CXX_FLAGS "-std=c++11")
 
 IF(APPLE)
     SET(EXTRA_LIBS "-framework Cocoa -framework OpenGL")

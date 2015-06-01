@@ -4,3 +4,6 @@
 [submodule "nanovg"]
 	path = nanovg
 	url = ../nanovg.git
+[submodule "litehtml"]
+	path = litehtml
+	url = https://github.com/litehtml/litehtml.git
