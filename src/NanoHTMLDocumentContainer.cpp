@@ -9,8 +9,6 @@
 #include "nanohtml.h"
 #include "NanoHTMLDocumentContainer.h"
 
-
-
 litehtml::uint_ptr NanoHTMLDocumentContainer::create_font(const litehtml::tchar_t* faceName, int size, int weight, litehtml::font_style italic, unsigned int decoration, litehtml::font_metrics* fm)
 {
 	char *fontFile, *fontFace;
@@ -41,13 +39,29 @@ litehtml::uint_ptr NanoHTMLDocumentContainer::create_font(const litehtml::tchar_
 			fontFace = (char*)"serif";
 		}
 	}
+	
+	// Creating the new font
+	char fontNameFull[256];
+	sprintf(fontNameFull, "%.240s-%d", fontFace, size);
+	
+	//std::string fontNameFull = std::string(fontFace) + size;
+	Font* f = new Font(std::string(fontNameFull), size);
+	nvgCreateFont(nvgContext, fontNameFull, fontFile);
 
-	litehtml::uint_ptr res = (litehtml::uint_ptr)(long)nvgCreateFont(nvgContext, fontFace, fontFile);
+	// Selecting the font we've just created
+	nvgFontFace(nvgContext, f->fontFace.c_str());
+	nvgFontSize(nvgContext, f->size);
+	currentSelectedFont = f;
 
-	nvgFontFace(nvgContext, fontFace);
-	nvgFontSize(nvgContext, size);
+	// Measuring the selected font
+	float ascender, descender, lineh;
+	nvgTextMetrics(nvgContext, &ascender, &descender, &lineh);
+	
+	fm->ascent = ascender;
+	fm->descent = descender;
+	fm->height = lineh;
 
-	return res;
+	return (litehtml::uint_ptr)f;
 }
 
 void NanoHTMLDocumentContainer::delete_font(litehtml::uint_ptr hFont)
@@ -57,19 +71,53 @@ void NanoHTMLDocumentContainer::delete_font(litehtml::uint_ptr hFont)
 
 int NanoHTMLDocumentContainer::text_width(const litehtml::tchar_t* text, litehtml::uint_ptr hFont)
 {
+	const Font& f = *(Font*)hFont;
+	if (currentSelectedFont != hFont)
+	{
+		nvgFontFace(nvgContext, f.fontFace.c_str());
+		nvgFontSize(nvgContext, f.size);
+		currentSelectedFont = hFont;
+	}
+
 	float bounds[4];
 	nvgTextBounds(nvgContext, 0, 0, text, NULL, bounds);
 	return (int)(bounds[2] - bounds[0]);
 }
 
+static bool operator==(const litehtml::web_color& c1, const litehtml::web_color& c2)
+{
+	if (c1.alpha == 0 && c2.alpha == 0)
+	{
+		return true;
+	}
+	else
+	{
+		return (c1.red == c2.red) && (c1.green == c2.green) && (c1.blue && c2.blue) && (c1.alpha == c2.alpha);
+	}
+}
+static bool operator!=(const litehtml::web_color& c1, const litehtml::web_color& c2)
+{
+	return !operator==(c1, c2);
+}
+
+
 void NanoHTMLDocumentContainer::draw_text(litehtml::uint_ptr /*hdc*/, const litehtml::tchar_t* text, litehtml::uint_ptr hFont, litehtml::web_color color, const litehtml::position& pos)
 {
-	NVGcolor baseColor = nvgRGB(255, 255, 192);
-	nvgFontFace(nvgContext, "sans");
-	nvgFontSize(nvgContext, get_default_font_size());
-	nvgFillColor(nvgContext, baseColor);
-	nvgText(nvgContext, pos.left(), pos.top() + get_default_font_size(), text, NULL);
-	nvgFill(nvgContext);
+	const Font& f = *(Font*)hFont;
+	if (currentSelectedFont != hFont)
+	{
+		nvgFontFace(nvgContext, f.fontFace.c_str());
+		nvgFontSize(nvgContext, f.size);
+		currentSelectedFont = hFont;
+	}
+	
+	if (color != currentColor) {
+		finishDrawing();
+		// Setting the new color
+		currentColor = color;
+		nvgFillColor(nvgContext, nvgRGBA(currentColor.red, currentColor.green, currentColor.blue, currentColor.alpha));
+	}
+	nvgText(nvgContext, pos.left(), pos.top(), text, NULL);
 }
 
 int NanoHTMLDocumentContainer::pt_to_px(int pt)
@@ -160,7 +208,7 @@ void NanoHTMLDocumentContainer::del_clip()
 
 void NanoHTMLDocumentContainer::get_client_rect(litehtml::position& client)
 {
-	
+
 }
 
 litehtml::element* NanoHTMLDocumentContainer::create_element(const litehtml::tchar_t* tag_name, const litehtml::string_map& attributes, litehtml::document* doc)
@@ -172,3 +220,13 @@ void NanoHTMLDocumentContainer::get_media_features(litehtml::media_features& med
 {
 	
 }
+
+void NanoHTMLDocumentContainer::finishDrawing()
+{
+	// The color has just changed
+	if (drawingState == dsText) {
+		// Filling in the previously written text
+		nvgFill(nvgContext);
+	}
+}
+

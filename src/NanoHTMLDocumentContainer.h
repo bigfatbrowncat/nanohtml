@@ -9,14 +9,37 @@
 #ifndef __nanohtml__NanoHTMLDocumentContainer__
 #define __nanohtml__NanoHTMLDocumentContainer__
 
+#include <string>
+
 #include <litehtml.h>
 
 class NanoHTMLDocumentContainer : public litehtml::document_container
 {
 private:
+	enum DrawingState
+	{
+		dsNone, dsText
+	};
+	
+	struct Font
+	{
+		const std::string fontFace;
+		const int size;
+		Font(const std::string& fontFace, int size): fontFace(fontFace), size(size) { }
+	};
+	
 	NVGcontext* nvgContext;
+
+	DrawingState drawingState;
+	litehtml::uint_ptr currentSelectedFont;
+	litehtml::web_color currentColor;
+	
 public:
-	NanoHTMLDocumentContainer(NVGcontext* nvgContext): nvgContext(nvgContext) { }
+	NanoHTMLDocumentContainer(NVGcontext* nvgContext):
+		nvgContext(nvgContext), drawingState(dsNone),
+		currentSelectedFont(NULL), currentColor(0, 0, 0, 0)
+	{
+	}
 	
 	virtual litehtml::uint_ptr create_font(const litehtml::tchar_t* faceName, int size, int weight, litehtml::font_style italic, unsigned int decoration, litehtml::font_metrics* fm);
 	virtual void delete_font(litehtml::uint_ptr hFont);
@@ -43,6 +66,8 @@ public:
     virtual void get_client_rect(litehtml::position& client);
     virtual litehtml::element* create_element(const litehtml::tchar_t* tag_name, const litehtml::string_map& attributes, litehtml::document* doc);
     virtual void get_media_features(litehtml::media_features& media);
+	
+	void finishDrawing();
 };
 
 #endif /* defined(__nanohtml__NanoHTMLDocumentContainer__) */

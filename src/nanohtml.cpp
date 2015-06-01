@@ -3,6 +3,9 @@
 #define NANOVG_GL3_IMPLEMENTATION
 #include <nanovg_gl.h>
 
+#include <stdio.h>
+#include <math.h>
+
 #include "NanoHTMLDocumentContainer.h"
 
 using namespace litehtml;
@@ -73,10 +76,6 @@ void errorcb(int error, const char* desc)
 	printf("GLFW error %d: %s\n", error, desc);
 }
 
-int blowup = 0;
-int screenshot = 0;
-int premult = 0;
-
 GLFWwindow* window;
 NVGcontext* vg = NULL;
 int fbWidth, fbHeight;
@@ -84,12 +83,7 @@ int winWidth, winHeight;
 float pxRatio;
 double fps = 25.0;
 
-void drawTextCenter(NVGcontext* vg, char* text, int x, int y) {
-	float bounds[4];
-	nvgTextBounds(vg, 0, 0, text, NULL, bounds);
-	int dx = x - (bounds[2] - bounds[0]) / 2, dy = y - (bounds[3] + bounds[1]) / 2;
-	nvgText(vg, dx, dy, text, NULL);
-}
+litehtml::document* doc;
 
 static void key(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
@@ -97,15 +91,9 @@ static void key(GLFWwindow* window, int key, int scancode, int action, int mods)
 	NVG_NOTUSED(mods);
 	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, GL_TRUE);
-	if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
-		blowup = !blowup;
-	if (key == GLFW_KEY_S && action == GLFW_PRESS)
-		screenshot = 1;
-	if (key == GLFW_KEY_P && action == GLFW_PRESS)
-		premult = !premult;
 }
 
-static void draw(litehtml::document::ptr doc)
+static void draw()
 {
 	glfwGetWindowSize(window, &winWidth, &winHeight);
 	glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
@@ -115,18 +103,22 @@ static void draw(litehtml::document::ptr doc)
 
 	// Update and render
 	glViewport(0, 0, fbWidth, fbHeight);
-	glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
+	glClearColor(1.f, 1.f, 1.f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
 
 	nvgBeginFrame(vg, winWidth, winHeight, pxRatio);
 
 	double t1 = glfwGetTime();
+
 	doc->render(fbWidth);
+
 	doc->draw(NULL, 0, 0, NULL);
+	((NanoHTMLDocumentContainer*)doc->container())->finishDrawing();
 	
-	//drawClock(vg, winWidth, winHeight);
 	double t2 = glfwGetTime();
 
+	double d = ((t2 - t1)) * 1000;
+	printf("%lf msec\n", d);
 	usleep(fmax((1.0 / fps - (t2 - t1)) * 1000000, 0));
 	nvgEndFrame(vg);
 
@@ -135,7 +127,7 @@ static void draw(litehtml::document::ptr doc)
 
 static void windowSize(GLFWwindow* window, int width, int height)
 {
-	//draw();
+	draw();
 }
 
 int main()
@@ -273,6 +265,7 @@ int main()
 		"	margin-top:0.67em;  "
 		"	margin-bottom:0.67em;  "
 		"	font-size: 2em; "
+		"	color: #337711"
 		"} "
 		
 		"h2 { "
@@ -508,7 +501,24 @@ int main()
 		"	display: block; "
 		"} ");
 	
-	litehtml::document::ptr doc = litehtml::document::createFromUTF8("<html><head><title>the title</title></head><body>the text</body></html>", &dc, &ctx);
+	litehtml::document::ptr theDoc = litehtml::document::createFromUTF8(
+		"<html>"
+		"<head>"
+		"	<title>Harry Potter and the Methods of Rationality</title>"
+		"</head>"
+		"<body>"
+			"<h1>Chapter 122: Something to Protect: Hermione Granger</h1>"
+			"<p>And it was evening and it was morning, the last day. June 15th, 1992.</p>"
+			"<p>The beginning light of morning, the pre-dawn before sunrise, was barely brightening the sky. To the east of Hogwarts, where the Sun would rise, that faintest tinge of grey made barely visible the hilly horizon beyond the Quidditch stands.</p>"
+			"<p>The stone terrace-platform where Harry now sat would be high enough to see the dawn beyond the hills below; he'd asked for that, when he was describing his new office.</p>"
+			"<p>Harry was currently sitting cross-legged on a cushion, chilly pre-morning breezes stirring over his exposed hands and face. He'd ordered the house-elves to bring up the hand-glittered throne from his previous office as General Chaos... and then he'd told the elves to put it back, once it had occurred to Harry to start worrying about where his taste in decorations had come from and whether Voldemort had once possessed a similar throne. Which, itself, wasn't a knockdown argument - it wasn't like sitting on a glittery throne to survey the lands below Hogwarts was unethical in any way Harry's moral philosophy could make out - but Harry had decided that he needed to take time and think it through. Meanwhile, simple cushions would do well enough.</p>"
+			"<p>In the room below, connected to the rooftop by a simple wooden ladder, was Harry's new office inside Hogwarts. A wide room, surrounded by full-wall windows on four sides for sunlight; currently bare of furnishings but for four chairs and a desk. Harry had told Headmistress McGonagall what he was looking for, and Headmistress McGonagall had put on the Sorting Hat and then told Harry the series of twists and turns that would take him where he wanted to be. High enough in Hogwarts that the castle shouldn't have been that tall, high enough in Hogwarts that nobody looking from the outside would see a piece of castle corresponding to where Harry now sat. It seemed like an elementary precaution against snipers that there was no reason not to take.</p>"
+			"<p>Though, on the flip side, Harry had no idea where he currently was in any real sense. If his office couldn't be seen from the lands below, then how was Harry seeing the lands, how were photons making it from the landscape to him? On the western side of the horizon, stars still glittered, clear in the pre-dawn air. Were those photons the actual photons that had been emitted by huge plasma furnaces in the unimaginable distance? Or did Harry now sit within some dreaming vision of the Hogwarts castle? Or was it all, without any further explanation, 'just magic'? He needed to get electricity to work better around magic so he could experiment with shining lasers downward and upward.</p>"
+			"<p>And yes, Harry had his own office on Hogwarts now. He didn't have any official title yet, but the Boy-Who-Lived was now a true fixture of the Hogwarts School of Witchcraft and Wizardry, the soon-to-be-home of the Philosopher's Stone and the world's only wizarding institution of genuinely higher education. It wasn't fully secured, but Professor Vector had put up some preliminary Charms and Runes to screen the office and its rooftop against eavesdropping.</p>"
+		"</body>"
+		"</html>", &dc, &ctx);
+
+	doc = theDoc;
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -516,7 +526,7 @@ int main()
 
 		glfwGetCursorPos(window, &mx, &my);
 
-		draw(doc);
+		draw();
 		
 		glfwPollEvents();
 	}
