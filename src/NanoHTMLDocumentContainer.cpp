@@ -9,10 +9,20 @@
 #include "nanohtml.h"
 #include "NanoHTMLDocumentContainer.h"
 
+#define ROBOTO_PATH "fonts/Roboto"
+
 litehtml::uint_ptr NanoHTMLDocumentContainer::create_font(const litehtml::tchar_t* faceName, int size, int weight, litehtml::font_style italic, unsigned int decoration, litehtml::font_metrics* fm)
 {
 	char *fontFile, *fontFace;
-	bool bold = (weight > 500);
+	
+	enum WeightTypes
+	{
+		wtThin, wtLight, wtRegular, wtMedium, wtBold, wtBlack
+	} weightType;
+
+	bool condensed;
+	bool sans;
+
 
 	if (strcmp(faceName, "sans") == 0) {
 		if (bold)
