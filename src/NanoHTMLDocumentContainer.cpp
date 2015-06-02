@@ -6,10 +6,41 @@
 //
 //
 
+#include <string>
+#include <sstream>
+#include <vector>
+
 #include "nanohtml.h"
 #include "NanoHTMLDocumentContainer.h"
 
 #define ROBOTO_PATH "fonts/Roboto"
+
+char* cutToken(char* str, char* delims)
+{
+	while ((strchr(delims, *str) == NULL) && (*str != 0))
+	{
+		str++;
+	}
+	if (*str == 0)
+	{
+		return NULL;
+	}
+	else
+	{
+		*str = NULL;
+		str++;
+	}
+
+	while ((strchr(delims, *str) != NULL) && (*str != 0))
+	{
+		str++;
+	}
+	if (*str == 0)
+	{
+		return NULL;
+	}
+	return str;
+}
 
 litehtml::uint_ptr NanoHTMLDocumentContainer::create_font(const litehtml::tchar_t* faceName, int size, int weight, litehtml::font_style italic, unsigned int decoration, litehtml::font_metrics* fm)
 {
@@ -17,14 +48,53 @@ litehtml::uint_ptr NanoHTMLDocumentContainer::create_font(const litehtml::tchar_
 	
 	enum WeightTypes
 	{
-		wtThin, wtLight, wtRegular, wtMedium, wtBold, wtBlack
+		wtThin = 0,
+		wtLight = 1,
+		wtRegular = 2,
+		wtMedium = 3,
+		wtBold = 4,
+		wtBlack = 5
 	} weightType;
+	char* weightNames[] = { "Thin", "Light", "Regular", "Medium", "Bold", "Black" };
 
 	bool condensed;
 	bool sans;
 
+	std::vector<char*> faceNameTokens;
+	char* faceNameDup = strdup(faceName);
+	char* token = faceNameDup;
+	do
+	{
+		char* tokenNew = cutToken(token, (char*)" \t\n\r");
+		faceNameTokens.push_back(token);
+		token = tokenNew;
+	} while (token != NULL);
 
-	if (strcmp(faceName, "sans") == 0) {
+	for (std::vector<char*>::iterator iter = faceNameTokens.begin(); iter != faceNameTokens.end(); iter++)
+	{
+		if (strcmp(*iter, "sans") == 0) sans = true;
+		if (strcmp(*iter, "Roboto") == 0) sans = true;
+		if (strcmp(*iter, "condensed") == 0) condensed = true;
+	}
+	free(faceNameDup);
+	
+	if (weight < 200) {
+		weightType = wtThin;
+	} else if (weight < 350) {
+		weightType = wtLight;
+	} else if (weight < 450) {
+		weightType = wtRegular;
+	} else if (weight < 600) {
+		weightType = wtMedium;
+	} else if (weight < 800) {
+		weightType = wtBold;
+	}
+	
+	if (sans == true) {
+		
+	}
+	
+	/*if (strcmp(faceName, "sans") == 0) {
 		if (bold)
 		{
 			fontFile = (char*)"fonts/DroidSans-Bold.ttf";
@@ -48,7 +118,7 @@ litehtml::uint_ptr NanoHTMLDocumentContainer::create_font(const litehtml::tchar_
 			fontFile = (char*)"fonts/DroidSerif-Regular.ttf";
 			fontFace = (char*)"serif";
 		}
-	}
+	}*/
 	
 	// Creating the new font
 	char fontNameFull[256];
