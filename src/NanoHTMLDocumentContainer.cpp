@@ -13,7 +13,18 @@
 #include "nanohtml.h"
 #include "NanoHTMLDocumentContainer.h"
 
-#define ROBOTO_PATH "fonts/Roboto"
+#define FONTS_PATH "fonts/"
+
+enum WeightType
+{
+	wtThin = 0,
+	wtLight = 1,
+	wtRegular = 2,
+	wtMedium = 3,
+	wtBold = 4,
+	wtBlack = 5
+};
+static std::string weightNames[] = { "Thin", "Light", "Regular", "Medium", "Bold", "Black" };
 
 char* cutToken(char* str, char* delims)
 {
@@ -42,21 +53,15 @@ char* cutToken(char* str, char* delims)
 	return str;
 }
 
+/*std::string constructFontName(std::string family, WeightType weight, bool italic, int size)
+{
+	std::stringstream ss;
+	ss << family << "-" << weightNames[weight] << "-" << (italic ? "italic") << size;
+	return ss.str();
+}*/
+
 litehtml::uint_ptr NanoHTMLDocumentContainer::create_font(const litehtml::tchar_t* faceName, int size, int weight, litehtml::font_style italic, unsigned int decoration, litehtml::font_metrics* fm)
 {
-	char *fontFile, *fontFace;
-	
-	enum WeightTypes
-	{
-		wtThin = 0,
-		wtLight = 1,
-		wtRegular = 2,
-		wtMedium = 3,
-		wtBold = 4,
-		wtBlack = 5
-	} weightType;
-	char* weightNames[] = { "Thin", "Light", "Regular", "Medium", "Bold", "Black" };
-
 	bool condensed;
 	bool sans;
 
@@ -78,6 +83,8 @@ litehtml::uint_ptr NanoHTMLDocumentContainer::create_font(const litehtml::tchar_
 	}
 	free(faceNameDup);
 	
+	WeightType weightType;
+	
 	if (weight < 200) {
 		weightType = wtThin;
 	} else if (weight < 350) {
@@ -90,10 +97,35 @@ litehtml::uint_ptr NanoHTMLDocumentContainer::create_font(const litehtml::tchar_
 		weightType = wtBold;
 	}
 	
+	std::string fontFile, fontFace;
+
 	if (sans == true) {
+		std::string base = FONTS_PATH "Roboto/Roboto";
+		if (condensed) {
+			base += "Condensed";
+		}
 		
+		if (weightType == wtRegular) {
+			if (italic == litehtml::font_style::fontStyleItalic) {
+				fontFile = base + "-Italic";
+			} else {
+				fontFile = base + "-Regular";
+			}
+		} else {
+
+			fontFile = base + "-" + weightNames[weightType];
+
+			if (italic == litehtml::font_style::fontStyleItalic)
+			{
+				fontFile += "Italic";
+			}
+		}
+	} else {
+		// TODO
 	}
-	
+
+	fontFile += ".ttf";
+
 	/*if (strcmp(faceName, "sans") == 0) {
 		if (bold)
 		{
@@ -121,12 +153,12 @@ litehtml::uint_ptr NanoHTMLDocumentContainer::create_font(const litehtml::tchar_
 	}*/
 	
 	// Creating the new font
-	char fontNameFull[256];
-	sprintf(fontNameFull, "%.240s-%d", fontFace, size);
+	/*char fontNameFull[256];
+	sprintf(fontNameFull, "%.240s-%d", fontFace, size);*/
 	
 	//std::string fontNameFull = std::string(fontFace) + size;
-	Font* f = new Font(std::string(fontNameFull), size);
-	nvgCreateFont(nvgContext, fontNameFull, fontFile);
+	Font* f = new Font(fontFile, size);
+	nvgCreateFont(nvgContext, fontFile.c_str(), fontFile.c_str());
 
 	// Selecting the font we've just created
 	nvgFontFace(nvgContext, f->fontFace.c_str());
@@ -307,6 +339,11 @@ void NanoHTMLDocumentContainer::finishDrawing()
 	if (drawingState == dsText) {
 		// Filling in the previously written text
 		nvgFill(nvgContext);
+		drawingState = dsNone;
 	}
 }
 
+void NanoHTMLDocumentContainer::loadFonts()
+{
+	
+}

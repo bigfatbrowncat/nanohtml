@@ -68,6 +68,7 @@ public:
     virtual void get_media_features(litehtml::media_features& media);
 	
 	void finishDrawing();
+	void loadFonts();
 };
 
 #endif /* defined(__nanohtml__NanoHTMLDocumentContainer__) */
