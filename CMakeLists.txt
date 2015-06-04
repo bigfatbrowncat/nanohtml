@@ -2,7 +2,7 @@ cmake_minimum_required (VERSION 2.8)
 
 set(PROJNAME "nanohtml")
 
-file(GLOB FONTS "${CMAKE_CURRENT_SOURCE_DIR}/fonts/*.ttf")
+file(GLOB FONTS "${CMAKE_CURRENT_SOURCE_DIR}/fonts/**/*.ttf")
 
 file(GLOB MAIN_SOURCES_C "${CMAKE_CURRENT_SOURCE_DIR}/src/*.c")
 file(GLOB MAIN_SOURCES_CPP "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")

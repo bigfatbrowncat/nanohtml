@@ -18,26 +18,26 @@ class NanoHTMLDocumentContainer : public litehtml::document_container
 private:
 	enum DrawingState
 	{
-		dsNone, dsText
+		dsNone, dsText, dsBackground
 	};
 	
 	struct Font
 	{
 		const std::string fontFace;
 		const int size;
-		Font(const std::string& fontFace, int size): fontFace(fontFace), size(size) { }
+		const int deltaY;
+		Font(const std::string& fontFace, int size, int deltaY): fontFace(fontFace), size(size), deltaY(deltaY) { }
 	};
 	
 	NVGcontext* nvgContext;
 
 	DrawingState drawingState;
 	litehtml::uint_ptr currentSelectedFont;
-	litehtml::web_color currentColor;
 	
 public:
 	NanoHTMLDocumentContainer(NVGcontext* nvgContext):
 		nvgContext(nvgContext), drawingState(dsNone),
-		currentSelectedFont(NULL), currentColor(0, 0, 0, 0)
+		currentSelectedFont(NULL)
 	{
 	}
 	
