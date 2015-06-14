@@ -3,11 +3,15 @@
 #define NANOVG_GL3_IMPLEMENTATION
 #include <nanovg_gl.h>
 
+#include <sstream>
+
 #include <stdio.h>
 #include <math.h>
 
 #include "default_style.h"
 #include "NanoHTMLDocumentContainer.h"
+
+#include "../src/el_div.h"
 
 using namespace litehtml;
 
@@ -97,6 +101,9 @@ static void key(GLFWwindow* window, int key, int scancode, int action, int mods)
 int frameCounter = 0;
 double framesTime = 0.0;
 
+double yScrollPos = 0;
+int scrollDivHeight = 0;
+
 static void draw()
 {
 	glfwGetWindowSize(window, &winWidth, &winHeight);
@@ -114,9 +121,51 @@ static void draw()
 
 	double t1 = glfwGetTime();
 
-	doc->render(fbWidth);
+	doc->render(winWidth);
+
+	// Neutralizing overscroll
+	
+	litehtml::element::ptr scrollPtr = doc->root()->select_one("#scroll");
+	scrollDivHeight = scrollPtr->height();
+
+	double yScrollVel = 0;
+	if (yScrollPos < -scrollDivHeight + winHeight) {
+		double delta = yScrollPos - (-scrollDivHeight + winHeight);
+		yScrollVel = -delta / 2;
+	}
+	if (yScrollPos > 0) {
+		yScrollVel = -yScrollPos / 2 + 0.1;
+	}
+
+	yScrollPos += yScrollVel / 2;
+	
+	// Setting scroll position
+	{
+		std::stringstream ss; ss << "position: relative; top: " << yScrollPos << "px;";
+		scrollPtr->set_attr("style", ss.str().c_str());
+		scrollPtr->parse_styles();
+	}
+
+	// Seting scrollbar size and position
+	{
+		litehtml::element::ptr scrollbarPtr = doc->root()->select_one("#scrollbar");
+		if (scrollDivHeight > winHeight)
+		{
+			int sbHeight = winHeight * winHeight / scrollDivHeight - 4;
+			int sbPos = (winHeight - sbHeight - 4) * (1.0 - yScrollPos / (scrollDivHeight - winHeight)) - winHeight + sbHeight + 6;
+			std::stringstream ss; ss << "visibility: visible; border-radius: 3.5px; position: absolute; right: 2px; top: " << sbPos << "px; width: 7px; height: " << sbHeight << "px; background-color: rgba(0, 0, 0, 0.5);";
+			scrollbarPtr->set_attr("style", ss.str().c_str());
+			scrollbarPtr->parse_styles();
+		} else {
+			std::stringstream ss; ss << "visibility: hidden;";
+			scrollbarPtr->set_attr("style", ss.str().c_str());
+			scrollbarPtr->parse_styles();
+		}
+	}
+	//
 
 	doc->draw(NULL, 0, 0, NULL);
+
 	((NanoHTMLDocumentContainer*)doc->container())->finishDrawing();
 	
 	double t2 = glfwGetTime();
@@ -157,7 +206,7 @@ static void cursorPosition(GLFWwindow* window, double x, double y)
 	}
 	
 
-	element::ptr el = doc->root()->get_element_by_point(x, y, x, y);
+	/*element::ptr el = doc->root()->get_element_by_point(x, y, x, y);
 	if (el != NULL)
 	{
 		std::string str;
@@ -167,11 +216,7 @@ static void cursorPosition(GLFWwindow* window, double x, double y)
 		}
 		
 		printf("Element under cursor is <%s> (\"%s\")\n", el->get_tagName(), str.c_str());
-/*		el->set_attr("style", "background: red;");
-		el->parse_styles();*/
-	}
-	/*
-	doc->on_lbutton_up(x, y, x, y, v);*/
+	}*/
 }
 
 static void mouseButton(GLFWwindow* window, int button, int action, int mods)
@@ -182,6 +227,23 @@ static void mouseButton(GLFWwindow* window, int button, int action, int mods)
 	} else if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE) {
 		doc->on_lbutton_up(cursorX, cursorY, cursorX, cursorY, v);
 	}
+}
+
+static void scroll(GLFWwindow* window, double xoffset, double yoffset)
+{
+	// Neutralizing overscroll
+	if ((yScrollPos < -scrollDivHeight + winHeight) && yoffset < 0) {
+		yoffset = 0;
+	}
+	if (yScrollPos > 0 && yoffset > 0) {
+		yoffset = 0;
+	}
+
+	yScrollPos += yoffset * 5;
+	
+	double xpos, ypos;
+	glfwGetCursorPos(window, &xpos, &ypos);
+	cursorPosition(window, xpos, ypos);
 }
 
 
@@ -221,6 +283,7 @@ int main()
 	glfwSetWindowSizeCallback(window, windowSize);
 	glfwSetCursorPosCallback(window, cursorPosition);
 	glfwSetMouseButtonCallback(window, mouseButton);
+	glfwSetScrollCallback(window, scroll);
 
 	glfwMakeContextCurrent(window);
     if (!glInit())
@@ -244,9 +307,6 @@ int main()
 	glfwSwapInterval(0);
 
 	glfwSetTime(0);
-
-/*	nvgCreateFont(vg, "bold", "fonts/Walkway_Bold.ttf");
-	nvgCreateFont(vg, "black", "fonts/Walkway_Black.ttf");*/
 	
 	NanoHTMLDocumentContainer dc(vg);
 	litehtml::context ctx;
@@ -256,10 +316,11 @@ int main()
 		"<html>"
 		"<head>"
 		"	<title>Harry Potter and the Methods of Rationality</title>"
-		"	<style> p:hover { color: #aaaaaa; } body {margin: 0;} h1 { color: #337711 } div.title { background-color:rgba(128, 255, 128, 0.3); padding-left: 20pt; padding-right: 20pt; padding-top: 20pt; padding-bottom: 10pt; }</style>"
+		"	<style> p:hover { color: #444444; } body {margin: 0;} h1 { color: #337711 } div.title { background-color:rgba(128, 255, 128, 0.3); padding-left: 20pt; padding-right: 20pt; padding-top: 20pt; padding-bottom: 10pt; }</style>"
 		"</head>"
-		"<body>"
-			"<div class=\"title\"><h1>Chapter 122</h1><h2 style=\"margin-top: 0;\">Something to Protect: Hermione Granger</h2></div>"
+		"<body id=\"scroll\">"
+//			"<div id=\"scroll\" style=\"position: relative; top: 0px;\">"
+			"<div class=\"title\" style=\"position: relative; top: -100px; padding-top: 100px; margin-bottom: -100pt;\"><h1>Chapter 122</h1><h2 style=\"margin-top: 0;\">Something to Protect: Hermione Granger</h2></div>"
 			"<div style=\"margin: 20pt\">"
 			"<p>And it was evening and it was morning, the last day. June 15th, 1992.</p>"
 			"<p>The beginning light of morning, the pre-dawn before sunrise, was barely brightening the sky. To the east of Hogwarts, where the Sun would rise, that faintest tinge of grey made barely visible the hilly horizon beyond the Quidditch stands.</p>"
@@ -269,10 +330,17 @@ int main()
 			"<p>Though, on the flip side, Harry had no idea where he currently was in any real sense. If his office couldn't be seen from the lands below, then how was Harry seeing the lands, how were photons making it from the landscape to him? On the western side of the horizon, stars still glittered, clear in the pre-dawn air. Were those photons the actual photons that had been emitted by huge plasma furnaces in the unimaginable distance? Or did Harry now sit within some dreaming vision of the Hogwarts castle? Or was it all, without any further explanation, 'just magic'? He needed to get electricity to work better around magic so he could experiment with shining lasers downward and upward.</p>"
 			"<p>And yes, Harry had his own office on Hogwarts now. He didn't have any official title yet, but the Boy-Who-Lived was now a true fixture of the Hogwarts School of Witchcraft and Wizardry, the soon-to-be-home of the Philosopher's Stone and the world's only wizarding institution of genuinely higher education. It wasn't fully secured, but Professor Vector had put up some preliminary Charms and Runes to screen the office and its rooftop against eavesdropping.</p>"
 			"</div>"
+//			"</div>"
+//			"<div id=\"scrollbar\"></div>"
 		"</body>"
 		"</html>", &dc, &ctx);
 
 	doc = theNewDoc;
+	
+	// Adding a scrollbar to <body>
+	el_div::ptr scrollbarPtr = new el_div(doc);
+	scrollbarPtr->set_attr("id", "scrollbar");
+	doc->root()->select_one("#scroll")->parent()->appendChild(scrollbarPtr);
 
 	while (!glfwWindowShouldClose(window))
 	{

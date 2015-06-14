@@ -238,7 +238,13 @@ void NanoHTMLDocumentContainer::draw_background(litehtml::uint_ptr hdc, const li
 	}
 	nvgBeginPath(nvgContext);
 	nvgFillColor(nvgContext, nvgRGBA(bg.color.red, bg.color.green, bg.color.blue, bg.color.alpha));
-	nvgRect(nvgContext, bg.border_box.left(), bg.border_box.top(), bg.border_box.width, bg.border_box.height);
+
+	if (bg.border_radius.top_left_x > 0) {
+		nvgRoundedRect(nvgContext, bg.border_box.left(), bg.border_box.top(), bg.border_box.width, bg.border_box.height, bg.border_radius.top_left_x);
+	} else {
+		nvgRect(nvgContext, bg.border_box.left(), bg.border_box.top(), bg.border_box.width, bg.border_box.height);
+	}
+	
 	nvgFill(nvgContext);
 }
 
