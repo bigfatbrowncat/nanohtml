@@ -141,16 +141,49 @@ static void windowSize(GLFWwindow* window, int width, int height)
 	draw();
 }
 
+int cursorX = 0, cursorY = 0;
+
 static void cursorPosition(GLFWwindow* window, double x, double y)
 {
 	position::vector v;
-	doc->on_mouse_over(x, y, x, y, v);
+
+	cursorX = x;
+	cursorY = y;
+	
+	if (x > 0 && y > 0 && x < winWidth && y < winHeight) {
+		doc->on_mouse_over(x, y, x, y, v);
+	} else {
+		doc->on_mouse_leave(v);
+	}
+	
+
 	element::ptr el = doc->root()->get_element_by_point(x, y, x, y);
 	if (el != NULL)
 	{
-		el->set_attr("style", "background: red;");
+		std::string str;
+		el->get_text(str);
+		if (str.length() > 20) {
+			str = str.substr(0, 20) + "...";
+		}
+		
+		printf("Element under cursor is <%s> (\"%s\")\n", el->get_tagName(), str.c_str());
+/*		el->set_attr("style", "background: red;");
+		el->parse_styles();*/
+	}
+	/*
+	doc->on_lbutton_up(x, y, x, y, v);*/
+}
+
+static void mouseButton(GLFWwindow* window, int button, int action, int mods)
+{
+	position::vector v;
+	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
+		doc->on_lbutton_down(cursorX, cursorY, cursorX, cursorY, v);
+	} else if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE) {
+		doc->on_lbutton_up(cursorX, cursorY, cursorX, cursorY, v);
 	}
 }
+
 
 int main()
 {
@@ -187,6 +220,7 @@ int main()
 	glfwSetKeyCallback(window, key);
 	glfwSetWindowSizeCallback(window, windowSize);
 	glfwSetCursorPosCallback(window, cursorPosition);
+	glfwSetMouseButtonCallback(window, mouseButton);
 
 	glfwMakeContextCurrent(window);
     if (!glInit())
@@ -218,13 +252,13 @@ int main()
 	litehtml::context ctx;
 	ctx.load_master_stylesheet(DEFAULT_STYLESHEET);
 	
-	litehtml::document::ptr theDoc = litehtml::document::createFromUTF8(
+	litehtml::document::ptr theNewDoc = litehtml::document::createFromUTF8(
 		"<html>"
 		"<head>"
 		"	<title>Harry Potter and the Methods of Rationality</title>"
-		"	<style> body {margin: 0;} div.title { background-color:rgba(128, 255, 128, 0.3); padding-left: 20pt; margin-right: 20pt; margin-top: 10pt; }</style>"
+		"	<style> p:hover { color: #aaaaaa; } body {margin: 0;} h1 { color: #337711 } div.title { background-color:rgba(128, 255, 128, 0.3); padding-left: 20pt; padding-right: 20pt; padding-top: 20pt; padding-bottom: 10pt; }</style>"
 		"</head>"
-		"<body style=\"\">"
+		"<body>"
 			"<div class=\"title\"><h1>Chapter 122</h1><h2 style=\"margin-top: 0;\">Something to Protect: Hermione Granger</h2></div>"
 			"<div style=\"margin: 20pt\">"
 			"<p>And it was evening and it was morning, the last day. June 15th, 1992.</p>"
@@ -238,7 +272,7 @@ int main()
 		"</body>"
 		"</html>", &dc, &ctx);
 
-	doc = theDoc;
+	doc = theNewDoc;
 
 	while (!glfwWindowShouldClose(window))
 	{

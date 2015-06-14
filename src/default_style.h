@@ -83,7 +83,6 @@
 "	margin-top:0.67em;  "			\
 "	margin-bottom:0;  "				\
 "	font-size: 2em; "				\
-"	color: #337711"					\
 "} "								\
 									\
 "h2 { "								\

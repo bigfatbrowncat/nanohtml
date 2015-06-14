@@ -70,17 +70,10 @@ static bool operator!=(const litehtml::web_color& c1, const litehtml::web_color&
 }
 
 
-/*std::string constructFontName(std::string family, WeightType weight, bool italic, int size)
-{
-	std::stringstream ss;
-	ss << family << "-" << weightNames[weight] << "-" << (italic ? "italic") << size;
-	return ss.str();
-}*/
-
 litehtml::uint_ptr NanoHTMLDocumentContainer::create_font(const litehtml::tchar_t* faceName, int size, int weight, litehtml::font_style italic, unsigned int decoration, litehtml::font_metrics* fm)
 {
-	bool condensed;
-	bool sans;
+	bool condensed = false;
+	bool sans = false;
 
 	std::vector<char*> faceNameTokens;
 	char* faceNameDup = strdup(faceName);
@@ -271,7 +264,7 @@ void NanoHTMLDocumentContainer::link(litehtml::document* doc, litehtml::element:
 
 void NanoHTMLDocumentContainer::on_anchor_click(const litehtml::tchar_t* url, litehtml::element::ptr el)
 {
-	
+	printf("Click at: %s", el->get_tagName());
 }
 
 void NanoHTMLDocumentContainer::set_cursor(const litehtml::tchar_t* cursor)
