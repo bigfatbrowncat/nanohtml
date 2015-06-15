@@ -190,7 +190,14 @@ static void windowSize(GLFWwindow* window, int width, int height)
 	draw();
 }
 
-int cursorX = 0, cursorY = 0;
+double cursorX = 0, cursorY = 0;
+
+bool lmbIsDown = false;
+double lmbDownX = 0, lmbDownY = 0;
+element::ptr lmbDownElement = NULL;
+
+double scrollbarCursorX = 0, scrollbarCursorY = 0;
+double scrollbarCursorDeltaX = 0, scrollbarCursorDeltaY = 0;
 
 static void cursorPosition(GLFWwindow* window, double x, double y)
 {
@@ -204,24 +211,21 @@ static void cursorPosition(GLFWwindow* window, double x, double y)
 	} else {
 		doc->on_mouse_leave(v);
 	}
-	
 
-	/*element::ptr el = doc->root()->get_element_by_point(x, y, x, y);
-	if (el != NULL)
-	{
-		std::string str;
-		el->get_text(str);
-		if (str.length() > 20) {
-			str = str.substr(0, 20) + "...";
-		}
+	// Dragging the scrollbar
+	if (lmbIsDown && lmbDownElement == scrollbarPtr) {
+		scrollbarCursorX = lmbDownX - scrollbarPtr->left();
+		scrollbarCursorY = lmbDownY - scrollbarPtr->top();
 		
-		printf("Element under cursor is <%s> (\"%s\")\n", el->get_tagName(), str.c_str());
-	}*/
-}
+		scrollbarCursorDeltaX = cursorX - lmbDownX;
+		scrollbarCursorDeltaY = cursorY - lmbDownY;
+		
+		// Calculate the new scrollbar position here
+		printf("gotcha! %lf %lf\n", scrollbarCursorX, scrollbarCursorY);
+	}
 
-bool lmbIsDown = false;
-double lmbDownX = 0, lmbDownY = 0;
-element::ptr lmbDownElement = NULL;
+	
+}
 
 static void mouseButton(GLFWwindow* window, int button, int action, int mods)
 {
@@ -235,10 +239,6 @@ static void mouseButton(GLFWwindow* window, int button, int action, int mods)
 	} else if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE) {
 		doc->on_lbutton_up(cursorX, cursorY, cursorX, cursorY, v);
 		lmbIsDown = false;
-	}
-	
-	if (lmbIsDown && lmbDownElement == scrollbarPtr) {
-		printf("gotcha!\n");
 	}
 }
 
@@ -332,7 +332,6 @@ int main()
 		"	<style> p:hover { color: #444444; } body {margin: 0;} h1 { color: #337711 } div.title { background-color:rgba(128, 255, 128, 0.3); padding-left: 20pt; padding-right: 20pt; padding-top: 20pt; padding-bottom: 10pt; }</style>"
 		"</head>"
 		"<body id=\"scroll\">"
-//			"<div id=\"scroll\" style=\"position: relative; top: 0px;\">"
 			"<div class=\"title\" style=\"position: relative; top: -100px; padding-top: 100px; margin-bottom: -100pt;\"><h1>Chapter 122</h1><h2 style=\"margin-top: 0;\">Something to Protect: Hermione Granger</h2></div>"
 			"<div style=\"margin: 20pt\">"
 			"<p>And it was evening and it was morning, the last day. June 15th, 1992.</p>"
@@ -343,8 +342,6 @@ int main()
 			"<p>Though, on the flip side, Harry had no idea where he currently was in any real sense. If his office couldn't be seen from the lands below, then how was Harry seeing the lands, how were photons making it from the landscape to him? On the western side of the horizon, stars still glittered, clear in the pre-dawn air. Were those photons the actual photons that had been emitted by huge plasma furnaces in the unimaginable distance? Or did Harry now sit within some dreaming vision of the Hogwarts castle? Or was it all, without any further explanation, 'just magic'? He needed to get electricity to work better around magic so he could experiment with shining lasers downward and upward.</p>"
 			"<p>And yes, Harry had his own office on Hogwarts now. He didn't have any official title yet, but the Boy-Who-Lived was now a true fixture of the Hogwarts School of Witchcraft and Wizardry, the soon-to-be-home of the Philosopher's Stone and the world's only wizarding institution of genuinely higher education. It wasn't fully secured, but Professor Vector had put up some preliminary Charms and Runes to screen the office and its rooftop against eavesdropping.</p>"
 			"</div>"
-//			"</div>"
-//			"<div id=\"scrollbar\"></div>"
 		"</body>"
 		"</html>", &dc, &ctx);
 
