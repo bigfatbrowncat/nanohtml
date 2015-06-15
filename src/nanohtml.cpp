@@ -89,6 +89,8 @@ float pxRatio;
 double fps = 25.0;
 
 litehtml::document* doc;
+el_div::ptr scrollbarPtr;
+litehtml::element::ptr scrollPtr;
 
 static void key(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
@@ -125,7 +127,6 @@ static void draw()
 
 	// Neutralizing overscroll
 	
-	litehtml::element::ptr scrollPtr = doc->root()->select_one("#scroll");
 	scrollDivHeight = scrollPtr->height();
 
 	double yScrollVel = 0;
@@ -148,7 +149,6 @@ static void draw()
 
 	// Seting scrollbar size and position
 	{
-		litehtml::element::ptr scrollbarPtr = doc->root()->select_one("#scrollbar");
 		if (scrollDivHeight > winHeight)
 		{
 			int sbHeight = winHeight * winHeight / scrollDivHeight - 4;
@@ -219,13 +219,26 @@ static void cursorPosition(GLFWwindow* window, double x, double y)
 	}*/
 }
 
+bool lmbIsDown = false;
+double lmbDownX = 0, lmbDownY = 0;
+element::ptr lmbDownElement = NULL;
+
 static void mouseButton(GLFWwindow* window, int button, int action, int mods)
 {
 	position::vector v;
 	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
 		doc->on_lbutton_down(cursorX, cursorY, cursorX, cursorY, v);
+		lmbIsDown = true;
+		lmbDownX = cursorX;
+		lmbDownY = cursorY;
+		lmbDownElement = doc->root()->get_element_by_point(cursorX, cursorY, cursorX, cursorY);
 	} else if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE) {
 		doc->on_lbutton_up(cursorX, cursorY, cursorX, cursorY, v);
+		lmbIsDown = false;
+	}
+	
+	if (lmbIsDown && lmbDownElement == scrollbarPtr) {
+		printf("gotcha!\n");
 	}
 }
 
@@ -336,11 +349,13 @@ int main()
 		"</html>", &dc, &ctx);
 
 	doc = theNewDoc;
-	
+
+	scrollPtr = doc->root()->select_one("#scroll");
+
 	// Adding a scrollbar to <body>
-	el_div::ptr scrollbarPtr = new el_div(doc);
+	scrollbarPtr = new el_div(doc);
 	scrollbarPtr->set_attr("id", "scrollbar");
-	doc->root()->select_one("#scroll")->parent()->appendChild(scrollbarPtr);
+	scrollPtr->parent()->appendChild(scrollbarPtr);
 
 	while (!glfwWindowShouldClose(window))
 	{
