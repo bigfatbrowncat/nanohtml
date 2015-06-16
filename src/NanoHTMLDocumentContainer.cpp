@@ -38,7 +38,7 @@ char* cutToken(char* str, char* delims)
 	}
 	else
 	{
-		*str = NULL;
+		*str = 0;
 		str++;
 	}
 
@@ -165,12 +165,12 @@ void NanoHTMLDocumentContainer::delete_font(litehtml::uint_ptr hFont)
 
 int NanoHTMLDocumentContainer::text_width(const litehtml::tchar_t* text, litehtml::uint_ptr hFont)
 {
-	const Font& f = *(Font*)hFont;
-	if (currentSelectedFont != hFont)
+	Font& f = *(Font*)hFont;
+	if (currentSelectedFont != &f)
 	{
 		nvgFontFace(nvgContext, f.fontFace.c_str());
 		nvgFontSize(nvgContext, f.size);
-		currentSelectedFont = hFont;
+		currentSelectedFont = &f;
 	}
 
 	float bounds[4];
@@ -188,12 +188,12 @@ void NanoHTMLDocumentContainer::draw_text(litehtml::uint_ptr /*hdc*/, const lite
 		drawingState = dsText;
 	}
 	
-	const Font& f = *(Font*)hFont;
-	if (currentSelectedFont != hFont)
+	Font& f = *(Font*)hFont;
+	if (currentSelectedFont != &f)
 	{
 		nvgFontFace(nvgContext, f.fontFace.c_str());
 		nvgFontSize(nvgContext, f.size);
-		currentSelectedFont = hFont;
+		currentSelectedFont = &f;
 	}
 
 	nvgFillColor(nvgContext, nvgRGBA(color.red, color.green, color.blue, color.alpha));

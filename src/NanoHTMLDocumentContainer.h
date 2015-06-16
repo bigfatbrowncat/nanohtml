@@ -32,7 +32,7 @@ private:
 	NVGcontext* nvgContext;
 
 	DrawingState drawingState;
-	litehtml::uint_ptr currentSelectedFont;
+	Font* currentSelectedFont;
 	
 public:
 	NanoHTMLDocumentContainer(NVGcontext* nvgContext):
@@ -41,6 +41,8 @@ public:
 	{
 	}
 	
+	virtual ~NanoHTMLDocumentContainer() { }
+
 	virtual litehtml::uint_ptr create_font(const litehtml::tchar_t* faceName, int size, int weight, litehtml::font_style italic, unsigned int decoration, litehtml::font_metrics* fm);
 	virtual void delete_font(litehtml::uint_ptr hFont);
     virtual int	text_width(const litehtml::tchar_t* text, litehtml::uint_ptr hFont);

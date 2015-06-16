@@ -164,7 +164,8 @@ static void draw()
 	}
 	//
 
-	doc->draw(NULL, 0, 0, NULL);
+	position* ppos = NULL;// (0, 0, winWidth, winHeight);
+	doc->draw((litehtml::uint_ptr)NULL, 0, 0, ppos);
 
 	((NanoHTMLDocumentContainer*)doc->container())->finishDrawing();
 	
@@ -242,6 +243,12 @@ static void mouseButton(GLFWwindow* window, int button, int action, int mods)
 	}
 }
 
+#ifdef WIN32
+#	define SCROLL_VEL		25
+#else
+#	define SCROLL_VEL		5
+#endif
+
 static void scroll(GLFWwindow* window, double xoffset, double yoffset)
 {
 	// Neutralizing overscroll
@@ -252,7 +259,7 @@ static void scroll(GLFWwindow* window, double xoffset, double yoffset)
 		yoffset = 0;
 	}
 
-	yScrollPos += yoffset * 5;
+	yScrollPos += yoffset * SCROLL_VEL;
 	
 	double xpos, ypos;
 	glfwGetCursorPos(window, &xpos, &ypos);

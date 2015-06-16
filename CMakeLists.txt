@@ -62,15 +62,18 @@ include_directories(
 
 add_subdirectory("glfw")
 
-SET(CMAKE_C_FLAGS "-std=gnu99")
-SET(CMAKE_CXX_FLAGS "-std=c++11")
-
 IF(APPLE)
+	SET(CMAKE_C_FLAGS "-std=gnu99")
+	SET(CMAKE_CXX_FLAGS "-std=c++11")
+
     SET(EXTRA_LIBS "-framework Cocoa -framework OpenGL")
 	SET(CMAKE_EXE_LINKER_FLAGS "-std=gnu99")
 ELSEIF(WIN32)
+	SET(CMAKE_C_FLAGS "-m64 -DWIN32 -D_WIN64 -DLITEHTML_UTF8 -std=gnu99")
+	SET(CMAKE_CXX_FLAGS "-m64 -DWIN32 -D_WIN64 -DLITEHTML_UTF8 -std=c++11")
+
 	SET(EXTRA_LIBS "-lglu32 -lopengl32")
-	SET(CMAKE_EXE_LINKER_FLAGS "-std=gnu99 -static -static-libgcc -static-libstdc++ -mwindows")
+	SET(CMAKE_EXE_LINKER_FLAGS "-m64 -std=gnu99 -static -static-libgcc -static-libstdc++ -mwindows")
 ENDIF()
 
 target_link_libraries(${PROJNAME} glfw ${GLFW_LIBRARIES} ${EXTRA_LIBS})
