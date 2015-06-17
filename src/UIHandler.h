@@ -52,6 +52,7 @@ private:
 	};
 	
 	static std::map<GLFWwindow*, UIHandler*> handlersForWindows;
+	static std::map<std::string, int> handlersForImages;
 	
 	GLFWwindow* window;
 	NVGcontext* nvgContext;

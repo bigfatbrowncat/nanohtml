@@ -73,6 +73,7 @@ static bool operator!=(const litehtml::web_color& c1, const litehtml::web_color&
 }
 
 std::map<GLFWwindow*, UIHandler*> UIHandler::handlersForWindows;
+std::map<std::string, int> UIHandler::handlersForImages;
 
 
 litehtml::uint_ptr UIHandler::create_font(const litehtml::tchar_t* faceName, int size, int weight, litehtml::font_style italic, unsigned int decoration, litehtml::font_metrics* fm)
@@ -228,12 +229,14 @@ void UIHandler::draw_list_marker(litehtml::uint_ptr hdc, const litehtml::list_ma
 
 void UIHandler::load_image(const litehtml::tchar_t* src, const litehtml::tchar_t* baseurl, bool redraw_on_ready)
 {
-	
+	printf("Loading image %s from %s", src, baseurl);
+	int handler = nvgCreateImage(nvgContext, src, 0);
+	handlersForImages.insert(std::pair<std::string, int>(std::string(src), handler));
 }
 
 void UIHandler::get_image_size(const litehtml::tchar_t* src, const litehtml::tchar_t* baseurl, litehtml::size& sz)
 {
-	
+	nvgImageSize(nvgContext, handlersForImages[src], &sz.width, &sz.height);
 }
 
 void UIHandler::draw_background(litehtml::uint_ptr hdc, const litehtml::background_paint& bg)
