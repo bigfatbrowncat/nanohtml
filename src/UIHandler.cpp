@@ -229,9 +229,15 @@ void UIHandler::draw_list_marker(litehtml::uint_ptr hdc, const litehtml::list_ma
 
 void UIHandler::load_image(const litehtml::tchar_t* src, const litehtml::tchar_t* baseurl, bool redraw_on_ready)
 {
-	printf("Loading image %s from %s", src, baseurl);
-	int handler = nvgCreateImage(nvgContext, src, 0);
-	handlersForImages.insert(std::pair<std::string, int>(std::string(src), handler));
+	if (handlersForImages.find(src) == handlersForImages.end()) {
+		printf("Loading image %s from %s...\n", src, baseurl);
+		int handler = nvgCreateImage(nvgContext, src, 0);
+		if (handler != 0) {
+			handlersForImages.insert(std::pair<std::string, int>(std::string(src), handler));
+		} else {
+			printf("ERROR: Can't load image %s\n", src);
+		}
+	}
 }
 
 void UIHandler::get_image_size(const litehtml::tchar_t* src, const litehtml::tchar_t* baseurl, litehtml::size& sz)
@@ -245,14 +251,21 @@ void UIHandler::draw_background(litehtml::uint_ptr hdc, const litehtml::backgrou
 		finishDrawing();
 	}
 	nvgBeginPath(nvgContext);
+
 	nvgFillColor(nvgContext, nvgRGBA(bg.color.red, bg.color.green, bg.color.blue, bg.color.alpha));
-	
+	if (bg.image != "") {
+		int imgIndex = handlersForImages[bg.image];
+		NVGpaint img = nvgImagePattern(nvgContext, bg.position_x, bg.position_y, bg.image_size.width, bg.image_size.height, 0.f, imgIndex, 1.f);
+		nvgFillPaint(nvgContext, img);
+	}
+
+	// TODO Add support for different corner radiuses
 	if (bg.border_radius.top_left_x > 0) {
 		nvgRoundedRect(nvgContext, bg.border_box.left(), bg.border_box.top(), bg.border_box.width, bg.border_box.height, bg.border_radius.top_left_x);
 	} else {
 		nvgRect(nvgContext, bg.border_box.left(), bg.border_box.top(), bg.border_box.width, bg.border_box.height);
 	}
-	
+
 	nvgFill(nvgContext);
 }
 

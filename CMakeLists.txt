@@ -3,15 +3,12 @@ cmake_minimum_required (VERSION 2.8)
 set(PROJNAME "nanohtml")
 
 file(GLOB FONTS "${CMAKE_CURRENT_SOURCE_DIR}/fonts/**/*.ttf")
+file(GLOB IMAGES "${CMAKE_CURRENT_SOURCE_DIR}/images/*.png")
 
 file(GLOB MAIN_SOURCES_C "${CMAKE_CURRENT_SOURCE_DIR}/src/*.c")
 file(GLOB MAIN_SOURCES_CPP "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
 file(GLOB LITEHTML_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/litehtml/src/*.cpp")
 file(GLOB LITEHTML_GUMBO_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/litehtml/src/gumbo/*.c")
-
-set(ALLRESOURCES 
-	${FONTS}
-)
 
 set(SOURCES
 	${MAIN_SOURCES_CPP} ${MAIN_SOURCES_C}
@@ -26,14 +23,12 @@ IF(APPLE)
 		${PROJNAME}
 		MACOSX_BUNDLE 
 		${SOURCES}
-		${ALLRESOURCES}
+		${FONTS} ${IMAGES}
 	)
 	
-	set_source_files_properties(
-    		${ALLRESOURCES}
-	    PROPERTIES
-    		MACOSX_PACKAGE_LOCATION Resources/fonts
-  	)
+	set_source_files_properties(${FONTS} PROPERTIES MACOSX_PACKAGE_LOCATION Resources/fonts)
+	set_source_files_properties(${IMAGES} PROPERTIES MACOSX_PACKAGE_LOCATION Resources/images)
+
   	set(MACOSX_BUNDLE_BUNDLE_NAME "nanohtml")
   	
 ELSE()
@@ -43,7 +38,8 @@ ELSE()
 		${ALLRESOURCES}
 	)
 
-	file(COPY ${ALLRESOURCES} DESTINATION "fonts/")
+	file(COPY ${FONTS} DESTINATION "fonts/")
+	file(COPY ${IMAGES} DESTINATION "images/")
 ENDIF(APPLE)
 
 include_directories(

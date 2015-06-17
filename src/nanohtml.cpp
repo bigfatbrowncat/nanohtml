@@ -25,6 +25,7 @@ int main()
 		"	<style> p:hover { color: #444444; } body {margin: 0;} h1 { color: #337711 } div.title { background-color:rgba(128, 255, 128, 0.3); padding-left: 20pt; padding-right: 20pt; padding-top: 20pt; padding-bottom: 10pt; }</style>"
 		"</head>"
 		"<body id=\"scroll\">"
+			"<img src=\"images/tux.png\" style=\"float: right; margin: 5pt; border-radius: 64px; width: 128px; height: 128px; background-color: rgba(128, 128, 255, 0.4);\"/>"
 			"<div class=\"title\" style=\"position: relative; top: -100px; padding-top: 100px; margin-bottom: -100pt;\"><h1>Chapter 122</h1><h2 style=\"margin-top: 0;\">Something to Protect: Hermione Granger</h2></div>"
 			"<div style=\"margin: 20pt\">"
 			"<p>And it was evening and it was morning, the last day. June 15th, 1992.</p>"
