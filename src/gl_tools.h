@@ -13,7 +13,9 @@
 extern "C" {
 #endif
 	
-typedef char BOOL;
+#ifndef BOOL
+typedef int BOOL;
+#endif
 
 #ifndef TRUE
 #	define TRUE		1

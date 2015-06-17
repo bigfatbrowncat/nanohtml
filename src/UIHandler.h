@@ -17,6 +17,8 @@
 #include <stdbool.h>
 #include <math.h>
 
+#include <GL3/gl3w.h>
+
 #define GLFW_INCLUDE_GLCOREARB
 #include <GLFW/glfw3.h>
 
