@@ -16,7 +16,8 @@
 #define NANOVG_GL3_IMPLEMENTATION
 #include <nanovg_gl.h>
 
-#define FONTS_PATH "fonts/"
+#define FONTS_PATH		"fonts/"
+#define FONT_SCALE		1.45
 
 enum WeightType
 {
@@ -93,8 +94,7 @@ litehtml::uint_ptr UIHandler::create_font(const litehtml::tchar_t* faceName, int
 	
 	for (std::vector<char*>::iterator iter = faceNameTokens.begin(); iter != faceNameTokens.end(); iter++)
 	{
-		if (strcmp(*iter, "sans") == 0) sans = true;
-		if (strcmp(*iter, "Roboto") == 0) sans = true;
+		if (strcmp(*iter, "sans-serif") == 0) sans = true;
 		if (strcmp(*iter, "condensed") == 0) condensed = true;
 	}
 	free(faceNameDup);
@@ -116,7 +116,7 @@ litehtml::uint_ptr UIHandler::create_font(const litehtml::tchar_t* faceName, int
 	std::string fontFile, fontFace;
 	
 	if (sans == true) {
-		std::string base = FONTS_PATH "Roboto";
+		std::string base = FONTS_PATH "Roboto/Roboto";
 		if (condensed) {
 			base += "Condensed";
 		}
@@ -137,7 +137,12 @@ litehtml::uint_ptr UIHandler::create_font(const litehtml::tchar_t* faceName, int
 			}
 		}
 	} else {
-		// TODO
+		std::string base = FONTS_PATH "RobotoSlab/RobotoSlab";
+		if (weightType == wtRegular) {
+			fontFile = base + "-Regular";
+		} else {
+			fontFile = base + "-" + weightNames[weightType];
+		}
 	}
 	
 	fontFile += ".ttf";
@@ -148,7 +153,7 @@ litehtml::uint_ptr UIHandler::create_font(const litehtml::tchar_t* faceName, int
 	
 	// Selecting the font we've just created
 	nvgFontFace(nvgContext, fontFile.c_str());
-	nvgFontSize(nvgContext, size);
+	nvgFontSize(nvgContext, size * FONT_SCALE);
 	
 	// Measuring the selected font
 	float ascender, descender, lineh;
@@ -175,7 +180,7 @@ int UIHandler::text_width(const litehtml::tchar_t* text, litehtml::uint_ptr hFon
 	if (currentSelectedFont != &f)
 	{
 		nvgFontFace(nvgContext, f.fontFace.c_str());
-		nvgFontSize(nvgContext, f.size);
+		nvgFontSize(nvgContext, f.size * FONT_SCALE);
 		currentSelectedFont = &f;
 	}
 	
@@ -198,7 +203,7 @@ void UIHandler::draw_text(litehtml::uint_ptr /*hdc*/, const litehtml::tchar_t* t
 	if (currentSelectedFont != &f)
 	{
 		nvgFontFace(nvgContext, f.fontFace.c_str());
-		nvgFontSize(nvgContext, f.size);
+		nvgFontSize(nvgContext, f.size * FONT_SCALE);
 		currentSelectedFont = &f;
 	}
 	
@@ -206,20 +211,24 @@ void UIHandler::draw_text(litehtml::uint_ptr /*hdc*/, const litehtml::tchar_t* t
 	nvgText(nvgContext, pos.left(), pos.top() - f.deltaY, text, NULL);
 }
 
+static int pt_to_px(float pxRatio, int pt) {
+	int res = (int)((float)pt / 0.75f * pxRatio);
+	return res;
+}
+
 int UIHandler::pt_to_px(int pt)
 {
-	// TODO Calculate correctly (int)((float)pt * 96 / dpi);
-	return pt;
+	return ::pt_to_px(pxRatio, pt);
 }
 
 int UIHandler::get_default_font_size() const
 {
-	return 17;
+	return ::pt_to_px(pxRatio, 12);
 }
 
 const litehtml::tchar_t* UIHandler::get_default_font_name() const
 {
-	return "sans";
+	return "serif";
 }
 
 void UIHandler::draw_list_marker(litehtml::uint_ptr hdc, const litehtml::list_marker& marker)
@@ -373,8 +382,10 @@ UIHandler::UIHandler() : drawingState(dsNone), currentSelectedFont(NULL)
 	
 #ifdef DEMO_MSAA
 	glfwWindowHint(GLFW_SAMPLES, 4);
+#else
+	glfwWindowHint(GLFW_SAMPLES, 2);
 #endif
-	
+
 	window = glfwCreateWindow(600, 400, "nanohtml", NULL, NULL);
 	if (!window) {
 		glfwTerminate();
@@ -410,6 +421,7 @@ UIHandler::UIHandler() : drawingState(dsNone), currentSelectedFont(NULL)
 	glfwSwapInterval(0);
 	glfwSetTime(0);
 	
+	updateFrame();
 }
 
 UIHandler::~UIHandler()

@@ -78,7 +78,7 @@
 "} "								\
 									\
 "h1 { "								\
-"	font-family:sans condensed;  "	\
+"	font-family:sans-serif condensed;  "	\
 "	font-weight:bold;  "			\
 "	margin-top:0.67em;  "			\
 "	margin-bottom:0;  "				\
@@ -86,6 +86,7 @@
 "} "								\
 									\
 "h2 { "								\
+"	font-family:sans-serif;  "		\
 "	font-weight:bold;  "			\
 "	margin-top:0.83em;  "			\
 "	margin-bottom:0;  "				\
@@ -93,6 +94,7 @@
 "} "								\
 									\
 "h3 { "								\
+"	font-family:sans-serif;  "		\
 "	font-weight:bold;  "			\
 "	margin-top:1em;  "				\
 "	margin-bottom:0;  "				\
@@ -100,12 +102,14 @@
 "} "								\
 									\
 "h4 { "								\
+"	font-family:sans-serif;  "		\
 "	font-weight:bold;  "			\
 "	margin-top:1.33em;  "			\
 "	margin-bottom:0;  "				\
 "} "								\
 									\
 "h5 { "								\
+"	font-family:sans-serif;  "		\
 "	font-weight:bold;  "			\
 "	margin-top:1.67em;  "			\
 "	margin-bottom:0;  "				\
@@ -113,6 +117,7 @@
 "} "								\
 									\
 "h6 { "								\
+"	font-family:sans-serif;  "		\
 "	font-weight:bold;  "			\
 "	margin-top:2.33em;  "			\
 "	margin-bottom:0; "				\

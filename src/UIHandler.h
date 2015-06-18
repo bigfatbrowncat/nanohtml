@@ -83,15 +83,19 @@ private:
 	DrawingState drawingState;
 	Font* currentSelectedFont;
 	
+	void updateFrame() {
+		glfwGetWindowSize(window, &winWidth, &winHeight);
+		glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
+
+		// Calculate pixel ratio for hi-dpi devices.
+		pxRatio = (float)fbWidth / (float)winWidth;
+
+	}
 	
 	void draw()
 	{
-		glfwGetWindowSize(window, &winWidth, &winHeight);
-		glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
-		
-		// Calculate pixel ration for hi-dpi devices.
-		pxRatio = (float)fbWidth / (float)winWidth;
-		
+		updateFrame();
+
 		// Update and render
 		glViewport(0, 0, fbWidth, fbHeight);
 		glClearColor(1.f, 1.f, 1.f, 1.0f);

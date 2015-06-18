@@ -2,8 +2,21 @@ cmake_minimum_required (VERSION 2.8)
 
 set(PROJNAME "nanohtml")
 
-file(GLOB FONTS "${CMAKE_CURRENT_SOURCE_DIR}/fonts/**/*.ttf")
-file(GLOB IMAGES "${CMAKE_CURRENT_SOURCE_DIR}/images/*.png")
+file(GLOB RESOURCES "${CMAKE_CURRENT_SOURCE_DIR}/res/*")
+
+# we don't want to copy if we're building in the source dir
+if (NOT CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
+
+    foreach(item IN LISTS RESOURCES)
+        message(STATUS ${item})
+        add_custom_command(
+            OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/${item}"
+            COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_SOURCE_DIR}/${item}" "${CMAKE_CURRENT_BINARY_DIR}/${item}"
+            DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/${item}"
+        )
+    endforeach()
+endif()
+
 
 file(GLOB MAIN_SOURCES_C "${CMAKE_CURRENT_SOURCE_DIR}/src/*.c")
 file(GLOB MAIN_SOURCES_CPP "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
@@ -23,11 +36,10 @@ IF(APPLE)
 		${PROJNAME}
 		MACOSX_BUNDLE 
 		${SOURCES}
-		${FONTS} ${IMAGES}
+		${RESOURCES}
 	)
 	
-	set_source_files_properties(${FONTS} PROPERTIES MACOSX_PACKAGE_LOCATION Resources/fonts)
-	set_source_files_properties(${IMAGES} PROPERTIES MACOSX_PACKAGE_LOCATION Resources/images)
+	set_source_files_properties(${RESOURCES} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
 
   	set(MACOSX_BUNDLE_BUNDLE_NAME "nanohtml")
   	
@@ -35,11 +47,10 @@ ELSE()
 	add_executable(
 		${PROJNAME} 
 		${SOURCES} 
-		${ALLRESOURCES}
+		${RESOURCES}
 	)
 
-	file(COPY ${FONTS} DESTINATION "fonts/")
-	file(COPY ${IMAGES} DESTINATION "images/")
+	file(COPY ${RESOURCES} DESTINATION "./")
 ENDIF(APPLE)
 
 include_directories(
@@ -67,8 +78,9 @@ ELSEIF(WIN32)
 	SET(CMAKE_CXX_FLAGS " -DWIN32 -DLITEHTML_UTF8 -std=c++11")
 
 	SET(EXTRA_LIBS "-lglu32 -lopengl32")
-	SET(CMAKE_EXE_LINKER_FLAGS "-std=gnu99 -static -static-libgcc -static-libstdc++ -mwindows")
+	SET(CMAKE_EXE_LINKER_FLAGS "-std=gnu99 -static -static-libgcc -static-libstdc++ -mconsole")
 ENDIF()
 
 target_link_libraries(${PROJNAME} glfw ${GLFW_LIBRARIES} ${EXTRA_LIBS})
 
+add_custom_target(data-target ALL DEPENDS "${RESOURCES}")
