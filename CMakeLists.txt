@@ -2,7 +2,7 @@ cmake_minimum_required (VERSION 2.8)
 
 set(PROJNAME "nanohtml")
 
-file(GLOB RESOURCES "${CMAKE_CURRENT_SOURCE_DIR}/res/*")
+file(GLOB_RECURSE RESOURCES RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}/res/" "res/*.*")
 
 # we don't want to copy if we're building in the source dir
 if (NOT CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
@@ -11,8 +11,8 @@ if (NOT CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
         message(STATUS ${item})
         add_custom_command(
             OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/${item}"
-            COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_SOURCE_DIR}/${item}" "${CMAKE_CURRENT_BINARY_DIR}/${item}"
-            DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/${item}"
+            COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_SOURCE_DIR}/res/${item}" "${CMAKE_CURRENT_BINARY_DIR}/${item}"
+            DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/res/${item}"
         )
     endforeach()
 endif()
@@ -50,7 +50,7 @@ ELSE()
 		${RESOURCES}
 	)
 
-	file(COPY ${RESOURCES} DESTINATION "./")
+	#file(COPY ${RESOURCES} DESTINATION "./")
 ENDIF(APPLE)
 
 include_directories(
