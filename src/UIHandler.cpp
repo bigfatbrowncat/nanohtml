@@ -17,7 +17,7 @@
 #include <nanovg_gl.h>
 
 #define FONTS_PATH		"fonts/"
-#define FONT_SCALE		1.45
+#define FONT_SCALE		1.2
 
 enum WeightType
 {
@@ -285,7 +285,7 @@ void UIHandler::draw_borders(litehtml::uint_ptr hdc, const litehtml::borders& bo
 
 void UIHandler::set_caption(const litehtml::tchar_t* caption)
 {
-	
+	glfwSetWindowTitle(window, caption);
 }
 
 void UIHandler::set_base_url(const litehtml::tchar_t* base_url)
