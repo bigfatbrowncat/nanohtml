@@ -2,22 +2,6 @@ cmake_minimum_required (VERSION 2.8)
 
 set(PROJNAME "nanohtml")
 
-file(GLOB_RECURSE RESOURCES RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}/res/" "res/*.*")
-
-# we don't want to copy if we're building in the source dir
-if (NOT CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
-
-    foreach(item IN LISTS RESOURCES)
-        message(STATUS ${item})
-        add_custom_command(
-            OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/${item}"
-            COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_SOURCE_DIR}/res/${item}" "${CMAKE_CURRENT_BINARY_DIR}/${item}"
-            DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/res/${item}"
-        )
-    endforeach()
-endif()
-
-
 file(GLOB MAIN_SOURCES_C "${CMAKE_CURRENT_SOURCE_DIR}/src/*.c")
 file(GLOB MAIN_SOURCES_CPP "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
 file(GLOB LITEHTML_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/litehtml/src/*.cpp")
@@ -31,6 +15,8 @@ set(SOURCES
 
 project (${PROJNAME})
 
+file(GLOB_RECURSE RESOURCES RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}/res/" "res/*.*")
+
 IF(APPLE)
 	add_executable(
 		${PROJNAME}
@@ -38,19 +24,36 @@ IF(APPLE)
 		${SOURCES}
 		${RESOURCES}
 	)
-	
-	set_source_files_properties(${RESOURCES} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
 
-  	set(MACOSX_BUNDLE_BUNDLE_NAME "nanohtml")
+	foreach(item IN LISTS RESOURCES)
+		message(STATUS ${item})
+		get_filename_component(dir ${item} DIRECTORY)
+		set_source_files_properties(${item} PROPERTIES MACOSX_PACKAGE_LOCATION Resources/${dir})
+	endforeach()
+
+  	set(MACOSX_BUNDLE_BUNDLE_NAME ${PROJNAME})
   	
 ELSE()
+
+	# we don't want to copy if we're building in the source dir
+	if (NOT CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
+
+		foreach(item IN LISTS RESOURCES)
+			message(STATUS ${item})
+			add_custom_command(
+				OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/${item}"
+				COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_SOURCE_DIR}/res/${item}" "${CMAKE_CURRENT_BINARY_DIR}/${item}"
+				DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/res/${item}"
+			)
+		endforeach()
+	endif()
+
 	add_executable(
-		${PROJNAME} 
-		${SOURCES} 
+		${PROJNAME}
+		${SOURCES}
 		${RESOURCES}
 	)
 
-	#file(COPY ${RESOURCES} DESTINATION "./")
 ENDIF(APPLE)
 
 include_directories(
