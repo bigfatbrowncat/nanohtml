@@ -145,8 +145,13 @@ private:
 			}
 		}
 		
-		litehtml::position* ppos = NULL;
-		doc->draw((litehtml::uint_ptr)NULL, 0, 0, ppos);
+		litehtml::position pos;
+        pos.x = 0;
+        pos.y = 0;
+        pos.width = winWidth;
+        pos.height = winHeight;
+        
+		doc->draw((litehtml::uint_ptr)NULL, 0, 0, &pos);
 		
 		finishDrawing();
 		
@@ -290,7 +295,6 @@ private:
 	virtual void get_media_features(litehtml::media_features& media);
 	
 	void finishDrawing();
-	void loadFonts();
 	
 public:
 	UIHandler();

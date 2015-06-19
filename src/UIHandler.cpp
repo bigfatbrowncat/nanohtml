@@ -57,22 +57,6 @@ char* cutToken(char* str, char* delims)
 	return str;
 }
 
-static bool operator==(const litehtml::web_color& c1, const litehtml::web_color& c2)
-{
-	if (c1.alpha == 0 && c2.alpha == 0)
-	{
-		return true;
-	}
-	else
-	{
-		return (c1.red == c2.red) && (c1.green == c2.green) && (c1.blue && c2.blue) && (c1.alpha == c2.alpha);
-	}
-}
-static bool operator!=(const litehtml::web_color& c1, const litehtml::web_color& c2)
-{
-	return !operator==(c1, c2);
-}
-
 std::map<GLFWwindow*, UIHandler*> UIHandler::handlersForWindows;
 std::map<std::string, int> UIHandler::handlersForImages;
 
@@ -290,17 +274,17 @@ void UIHandler::set_caption(const litehtml::tchar_t* caption)
 
 void UIHandler::set_base_url(const litehtml::tchar_t* base_url)
 {
-	
+    printf("Set base url: %s\n", base_url);
 }
 
 void UIHandler::link(litehtml::document* doc, litehtml::element::ptr el)
 {
-	
+	printf("Link: %s\n", el->get_tagName());
 }
 
 void UIHandler::on_anchor_click(const litehtml::tchar_t* url, litehtml::element::ptr el)
 {
-	printf("Click at: %s", el->get_tagName());
+	printf("Click on: %s\n", el->get_tagName());
 }
 
 void UIHandler::set_cursor(const litehtml::tchar_t* cursor)
@@ -330,7 +314,10 @@ void UIHandler::del_clip()
 
 void UIHandler::get_client_rect(litehtml::position& client)
 {
-	
+    client.x = 0;
+    client.y = 0;
+    client.width = winWidth;
+    client.height = winHeight;
 }
 
 litehtml::element* UIHandler::create_element(const litehtml::tchar_t* tag_name, const litehtml::string_map& attributes, litehtml::document* doc)
@@ -340,7 +327,13 @@ litehtml::element* UIHandler::create_element(const litehtml::tchar_t* tag_name, 
 
 void UIHandler::get_media_features(litehtml::media_features& media)
 {
-	
+    media.type = litehtml::media_type_screen;
+    media.width = winWidth;
+    media.height = winHeight;
+    media.device_width = fbWidth;
+    media.device_height = fbHeight;
+    media.color = 32;
+    //media.resolution = ??
 }
 
 void UIHandler::finishDrawing()
@@ -352,11 +345,6 @@ void UIHandler::finishDrawing()
 		currentSelectedFont = NULL;
 		drawingState = dsNone;
 	}
-}
-
-void UIHandler::loadFonts()
-{
-	
 }
 
 UIHandler::UIHandler() : drawingState(dsNone), currentSelectedFont(NULL)
