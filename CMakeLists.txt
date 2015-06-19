@@ -15,24 +15,27 @@ set(SOURCES
 
 project (${PROJNAME})
 
-file(GLOB_RECURSE RESOURCES RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}/res/" "res/*.*")
+file(GLOB_RECURSE RESOURCES RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "res/*.*")
 
-IF(APPLE)
+IF (APPLE)
+
+	file(GLOB_RECURSE RESOURCES_NO_RES RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}/res/" "res/*.*")
+
+	foreach(item IN LISTS RESOURCES_NO_RES)
+		message(STATUS "Resource file: ${item}")
+		get_filename_component(dir ${item} DIRECTORY)
+		set_source_files_properties("${CMAKE_CURRENT_SOURCE_DIR}/res/${item}" PROPERTIES MACOSX_PACKAGE_LOCATION Resources/${dir})
+	endforeach()
+
+	set(MACOSX_BUNDLE_BUNDLE_NAME ${PROJNAME})
+
 	add_executable(
 		${PROJNAME}
-		MACOSX_BUNDLE 
+		MACOSX_BUNDLE
 		${SOURCES}
 		${RESOURCES}
 	)
 
-	foreach(item IN LISTS RESOURCES)
-		message(STATUS ${item})
-		get_filename_component(dir ${item} DIRECTORY)
-		set_source_files_properties(${item} PROPERTIES MACOSX_PACKAGE_LOCATION Resources/${dir})
-	endforeach()
-
-  	set(MACOSX_BUNDLE_BUNDLE_NAME ${PROJNAME})
-  	
 ELSE()
 
 	# we don't want to copy if we're building in the source dir
