@@ -1,12 +1,12 @@
 #include "nanohtml.h"
 #include "gl_tools.h"
 
-
 #include <stdio.h>
 #include <math.h>
 
 #include "default_style.h"
-#include "UIHandler.h"
+#include "Window.h"
+#include "ScrollbarExpansion.h"
 
 #include "../src/el_div.h"
 
@@ -58,17 +58,17 @@ void freeFileBuffer(char* buffer) {
 
 int main()
 {
-	UIHandler uiHandler;
-	litehtml::context ctx;
-	ctx.load_master_stylesheet(DEFAULT_STYLESHEET);
+	ScrollbarExpansion scrollbarExpansion;
 	
+	Window windowHandler;
+	windowHandler.addExpansion(scrollbarExpansion);
+
 	char* htmlFile = allocBufferAndReadFile("demo.html");
 	if (htmlFile != NULL) {
-		litehtml::document::ptr theNewDoc = litehtml::document::createFromUTF8(htmlFile, &uiHandler, &ctx);
+		windowHandler.loadDocument(htmlFile);
 		freeFileBuffer(htmlFile);
 
-		uiHandler.setDoc(theNewDoc);
-		uiHandler.loop();
+		windowHandler.loop();
 	} else {
 		fprintf(stderr, "Can't load the HTML file to show\n");
 		return 1;

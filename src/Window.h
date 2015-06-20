@@ -1,16 +1,19 @@
 //
-//  UIHandler.h
+//  Window.h
 //  nanohtml
 //
 //  Created by Ilya Mizus on 16.06.15.
 //
 //
 
-#ifndef __nanohtml__UIHandler__
-#define __nanohtml__UIHandler__
+class Window;
+
+#ifndef __nanohtml__Window__
+#define __nanohtml__Window__
 
 #include <sstream>
 #include <map>
+#include <list>
 #include <stdio.h>
 #include <time.h>
 #include <unistd.h>
@@ -28,14 +31,10 @@
 
 #include <nanovg.h>
 
+#include "Expansion.h"
 	
-#ifdef WIN32
-#	define SCROLL_VEL		25
-#else
-#	define SCROLL_VEL		5
-#endif
 
-class UIHandler : public litehtml::document_container
+class Window : public litehtml::document_container
 {
 private:
 	enum DrawingState
@@ -51,8 +50,14 @@ private:
 		Font(const std::string& fontFace, int size, int deltaY): fontFace(fontFace), size(size), deltaY(deltaY) { }
 	};
 	
-	static std::map<GLFWwindow*, UIHandler*> handlersForWindows;
+private:
+	static std::map<GLFWwindow*, Window*> handlersForWindows;
 	static std::map<std::string, int> handlersForImages;
+	static bool initialized;
+	static litehtml::context liteHTMLContext;
+
+private:
+	std::list<Expansion*> expansions;
 	
 	GLFWwindow* window;
 	NVGcontext* nvgContext;
@@ -64,30 +69,18 @@ private:
 	int frameCounter = 0;
 	double framesTime = 0.0;
 	
-	double yScrollPos = 0;
-	int scrollDivHeight = 0;
-	
-	litehtml::document* doc;
-	litehtml::el_div::ptr scrollbarPtr;
-	litehtml::element::ptr scrollPtr;
-	
-	double cursorX = 0, cursorY = 0;
-	
-	bool lmbIsDown = false;
-	double lmbDownX = 0, lmbDownY = 0;
-	litehtml::element::ptr lmbDownElement = NULL;
-	
-	double scrollbarCursorX = 0, scrollbarCursorY = 0;
-	double scrollbarCursorDeltaX = 0, scrollbarCursorDeltaY = 0;
+	litehtml::document::ptr document;
 	
 	DrawingState drawingState;
 	Font* currentSelectedFont;
 	
-	void updateFrame();
+	double cursorX, cursorY;
+private:
+	static void initialize();
+	
+private:
+	void updateFrameSize();
 	void draw();
-	void cursorPos(double x, double y);
-	void mouseBtn(int button, int action, int mods);
-	void scroll(double xoffset, double yoffset);
 	
 	static void errorcb(int error, const char* desc);
 	static void key(GLFWwindow* window, int key, int scancode, int action, int mods);
@@ -125,10 +118,27 @@ private:
 	void finishDrawing();
 	
 public:
-	UIHandler();
-	virtual ~UIHandler();
-	void setDoc(litehtml::document* doc);
+	Window();
+	virtual ~Window();
+	void loadDocument(std::string htmlText);
 	void loop();
+	int getWidth() const { return winWidth; }
+	int getHeight() const { return winHeight; }
+	double getCursorX() const { return cursorX; }
+	double getCursorY() const { return cursorY; }
+	
+	litehtml::element::ptr elementUnderCursor()
+	{
+		return document->root()->get_element_by_point(cursorX, cursorY, cursorX, cursorY);
+	}
+	litehtml::document::ptr getDocument()
+	{
+		return document;
+	}
+	void addExpansion(Expansion& expansion)
+	{
+		expansions.push_back(&expansion);
+	}
 };
 
-#endif /* defined(__nanohtml__UIHandler__) */
+#endif /* defined(__nanohtml__Window__) */
