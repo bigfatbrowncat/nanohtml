@@ -60,6 +60,186 @@ char* cutToken(char* str, char* delims)
 std::map<GLFWwindow*, UIHandler*> UIHandler::handlersForWindows;
 std::map<std::string, int> UIHandler::handlersForImages;
 
+void UIHandler::updateFrame() {
+	glfwGetWindowSize(window, &winWidth, &winHeight);
+	glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
+	
+	// Calculate pixel ratio for hi-dpi devices.
+	pxRatio = (float)fbWidth / (float)winWidth;
+	
+}
+
+void UIHandler::draw()
+{
+	updateFrame();
+	
+	// Update and render
+	glViewport(0, 0, fbWidth, fbHeight);
+	glClearColor(1.f, 1.f, 1.f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
+	
+	nvgBeginFrame(nvgContext, winWidth, winHeight, pxRatio);
+	
+	double t1 = glfwGetTime();
+	
+	doc->render(winWidth);
+	
+	// Neutralizing overscroll
+	
+	scrollDivHeight = scrollPtr->height();
+	
+	double yScrollVel = 0;
+	if (yScrollPos < -scrollDivHeight + winHeight) {
+		double delta = yScrollPos - (-scrollDivHeight + winHeight);
+		yScrollVel = -delta / 2;
+	}
+	if (yScrollPos > 0) {
+		yScrollVel = -yScrollPos / 2 + 0.1;
+	}
+	
+	yScrollPos += yScrollVel / 2;
+	
+	// Setting scroll position
+	scrollPtr->get_position().y = yScrollPos;
+	
+	// Seting scrollbar size and position
+	{
+		if (scrollDivHeight > winHeight)
+		{
+			int sbHeight = fmax(winHeight * winHeight / scrollDivHeight, 30.0) - 4;
+			int sbPos = (winHeight - sbHeight - 4) * (1.0 - yScrollPos / (scrollDivHeight - winHeight)) - winHeight + sbHeight + 6;
+			std::stringstream ss; ss << "visibility: visible; border-radius: 3.5px; position: absolute; right: 2px; top: " << sbPos << "px; width: 7px; height: " << sbHeight << "px; background-color: rgba(0, 0, 0, 0.4);";
+			scrollbarPtr->set_attr("style", ss.str().c_str());
+			scrollbarPtr->parse_styles();
+		} else {
+			std::stringstream ss; ss << "visibility: hidden;";
+			scrollbarPtr->set_attr("style", ss.str().c_str());
+			scrollbarPtr->parse_styles();
+		}
+	}
+	
+	litehtml::position pos;
+	pos.x = 0;
+	pos.y = 0;
+	pos.width = winWidth;
+	pos.height = winHeight;
+	
+	doc->draw((litehtml::uint_ptr)NULL, 0, 0, &pos);
+	
+	finishDrawing();
+	
+	double t2 = glfwGetTime();
+	
+	double d = ((t2 - t1)) * 1000;
+	framesTime += d;
+	frameCounter ++;
+	
+	if (frameCounter == (int)fps * 3) {
+		printf("%lf msec\n", framesTime / frameCounter);
+		framesTime = 0;
+		frameCounter = 0;
+	}
+	usleep(fmax((1.0 / fps - (t2 - t1)) * 1000000, 0));
+	nvgEndFrame(nvgContext);
+	
+	glfwSwapBuffers(window);
+}
+
+void UIHandler::cursorPos(double x, double y)
+{
+	litehtml::position::vector v;
+	
+	cursorX = x;
+	cursorY = y;
+	
+	if (x > 0 && y > 0 && x < winWidth && y < winHeight) {
+		doc->on_mouse_over(x, y, x, y, v);
+	} else {
+		doc->on_mouse_leave(v);
+	}
+	
+	// Dragging the scrollbar
+	if (lmbIsDown && lmbDownElement == scrollbarPtr) {
+		scrollbarCursorX = lmbDownX - scrollbarPtr->left();
+		scrollbarCursorY = lmbDownY - scrollbarPtr->top();
+		
+		scrollbarCursorDeltaX = cursorX - lmbDownX;
+		scrollbarCursorDeltaY = cursorY - lmbDownY;
+		
+		// Calculate the new scrollbar position here
+		printf("gotcha! %lf %lf\n", scrollbarCursorX, scrollbarCursorY);
+	}
+}
+
+void UIHandler::mouseBtn(int button, int action, int mods)
+{
+	litehtml::position::vector v;
+	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
+		doc->on_lbutton_down(cursorX, cursorY, cursorX, cursorY, v);
+		lmbIsDown = true;
+		lmbDownX = cursorX;
+		lmbDownY = cursorY;
+		lmbDownElement = doc->root()->get_element_by_point(cursorX, cursorY, cursorX, cursorY);
+	} else if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE) {
+		doc->on_lbutton_up(cursorX, cursorY, cursorX, cursorY, v);
+		lmbIsDown = false;
+	}
+	
+}
+
+void UIHandler::scroll(double xoffset, double yoffset)
+{
+	// Neutralizing overscroll
+	if ((yScrollPos < -scrollDivHeight + winHeight) && yoffset < 0) {
+		yoffset = 0;
+	}
+	if (yScrollPos > 0 && yoffset > 0) {
+		yoffset = 0;
+	}
+	
+	yScrollPos += yoffset * SCROLL_VEL;
+	
+	double xpos, ypos;
+	glfwGetCursorPos(window, &xpos, &ypos);
+	cursorPosition(window, xpos, ypos);
+}
+
+void UIHandler::errorcb(int error, const char* desc)
+{
+	printf("GLFW error %d: %s\n", error, desc);
+}
+
+void UIHandler::key(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+	NVG_NOTUSED(scancode);
+	NVG_NOTUSED(mods);
+	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+		glfwSetWindowShouldClose(window, GL_TRUE);
+}
+
+void UIHandler::windowSize(GLFWwindow* window, int width, int height)
+{
+	UIHandler* handler = handlersForWindows[window];
+	handler->draw();
+}
+
+void UIHandler::cursorPosition(GLFWwindow* window, double x, double y)
+{
+	UIHandler* handler = handlersForWindows[window];
+	handler->cursorPos(x, y);
+}
+
+void UIHandler::mouseButton(GLFWwindow* window, int button, int action, int mods)
+{
+	UIHandler* handler = handlersForWindows[window];
+	handler->mouseBtn(button, action, mods);
+}
+
+void UIHandler::scroll(GLFWwindow* window, double xoffset, double yoffset)
+{
+	UIHandler* handler = handlersForWindows[window];
+	handler->scroll(xoffset, yoffset);
+}
 
 litehtml::uint_ptr UIHandler::create_font(const litehtml::tchar_t* faceName, int size, int weight, litehtml::font_style italic, unsigned int decoration, litehtml::font_metrics* fm)
 {
@@ -161,7 +341,7 @@ void UIHandler::delete_font(litehtml::uint_ptr hFont)
 int UIHandler::text_width(const litehtml::tchar_t* text, litehtml::uint_ptr hFont)
 {
 	Font& f = *(Font*)hFont;
-	if (currentSelectedFont != &f)
+	//if (currentSelectedFont != &f)
 	{
 		nvgFontFace(nvgContext, f.fontFace.c_str());
 		nvgFontSize(nvgContext, f.size * FONT_SCALE);
@@ -184,7 +364,7 @@ void UIHandler::draw_text(litehtml::uint_ptr /*hdc*/, const litehtml::tchar_t* t
 	}
 	
 	Font& f = *(Font*)hFont;
-	if (currentSelectedFont != &f)
+	//if (currentSelectedFont != &f)
 	{
 		nvgFontFace(nvgContext, f.fontFace.c_str());
 		nvgFontSize(nvgContext, f.size * FONT_SCALE);
@@ -425,7 +605,7 @@ void UIHandler::setDoc(litehtml::document* doc)
 {
 	this->doc = doc;
 	
-	scrollPtr = doc->root()->select_one("#scroll");
+	scrollPtr = doc->root()->select_one("body");
 	
 	// Adding a scrollbar to <body>
 	scrollbarPtr = new litehtml::el_div(doc);
