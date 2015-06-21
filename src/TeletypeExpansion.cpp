@@ -6,60 +6,91 @@
 //
 //
 
-
 #include "TeletypeExpansion.h"
+
 
 void TeletypeExpansion::documentLoaded(Window& window)
 {
-	teletypePtr = &((litehtml::html_tag&)*window.getDocument()->root()->select_one(".teletype"));
+	litehtml::css_selector sel(litehtml::media_query_list::ptr(0));
+	sel.parse(".teletype");
 
-	// Getting inner items
-	contents = teletypePtr->children();
-	teletypePtr->children().clear();
+	teletypeElements = window.getDocument()->root()->select_all(sel);
+
+	// Taking inner items out
+	teletypeElementsContents.clear();
+	for (auto item = teletypeElements.begin(); item != teletypeElements.end(); item++)
+	{
+		litehtml::html_tag* tag = ((litehtml::html_tag*)(litehtml::element*)(*item));
+		
+		litehtml::elements_vector contents = tag->children();
+		teletypeElementsContents.push_back(contents);
+		tag->children().clear();
+	}
 }
 
 void TeletypeExpansion::render(Window& window)
 {
-	double dt = glfwGetTime() - startTimeSec;
-	const char* startTime = teletypePtr->get_style_property("teletype-start-time", true);
-	if (startTime != NULL)
+	auto contents = teletypeElementsContents.begin();
+	for (auto teletypeItem = teletypeElements.begin(); teletypeItem != teletypeElements.end(); teletypeItem++, contents++)
 	{
-		dt -= stod(std::string(startTime));
-	}
-	
-	charsToPrint = fmax(0, dt * 20.0);
-	
-	// Counting inners to print
-
-	teletypePtr->children().clear();
-	int p = 0;
-	for (auto item = contents.begin(); item != contents.end(); item++)
-	{
-		std::string itemText;
-		(*item)->get_text(itemText);
+		litehtml::html_tag* teletypePtr = ((litehtml::html_tag*)(litehtml::element*)(*teletypeItem));
 		
-		if (p + itemText.length() <= charsToPrint)
+		double dt = glfwGetTime() - startTimeSec;
+		const char* startTime = teletypePtr->get_style_property("teletype-start-time", true);
+		if (startTime != NULL)
 		{
-			teletypePtr->appendChild(*item);
-			p += itemText.length();
+			dt -= stod(std::string(startTime));
 		}
-		else
+		
+		int charsToPrint = fmax(0, dt * 20.0);
+		
+		// Counting inners to print
+
+		teletypePtr->children().clear();
+		int p = 0;
+		for (auto item = contents->begin(); item != contents->end(); item++)
 		{
-			litehtml::el_text::ptr inPtr = new litehtml::el_text(itemText.substr(0, charsToPrint - p).c_str(), window.getDocument());
-			teletypePtr->appendChild(inPtr);
-			inPtr->parse_styles();
-			//teletypePtr->place_element(inPtr, 1000);
-			break;
+			std::string itemText;
+			(*item)->get_text(itemText);
+			
+			if (p + itemText.length() < charsToPrint)
+			{
+				teletypePtr->appendChild(*item);
+				p += itemText.length();
+			}
+			else if (p < charsToPrint)
+			{
+				litehtml::el_text::ptr inPtr = new litehtml::el_text(itemText.substr(0, charsToPrint - p).c_str(), window.getDocument());
+				
+				teletypePtr->appendChild(inPtr);
+				inPtr->parse_styles();
+				break;
+			}
+			else
+			{
+				break;
+			}
 		}
+		if (teletypePtr->children().size() == 0)
+		{
+			teletypePtr->get_position().height = 0;
+		}
+		
 	}
-	
-	//litehtml::el_text::ptr inPtr = new litehtml::el_text(text.substr(0, charsToPrint).c_str(), window.getDocument());
-	//teletypePtr->appendChild(inPtr);
 }
 
 void TeletypeExpansion::draw(Window& window)
 {
-	
+	for (auto teletypeItem = teletypeElements.begin(); teletypeItem != teletypeElements.end(); teletypeItem++)
+	{
+		litehtml::html_tag* teletypePtr = ((litehtml::html_tag*)(litehtml::element*)(*teletypeItem));
+
+		if (teletypePtr->children().size() == 0)
+		{
+			teletypePtr->get_position().height = 0;
+			teletypePtr->get_position().width = 0;
+		}
+	}
 }
 
 void TeletypeExpansion::cursorPosition(Window& window, double x, double y)

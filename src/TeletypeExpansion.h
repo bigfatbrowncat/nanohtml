@@ -19,13 +19,12 @@
 class TeletypeExpansion : public Expansion
 {
 private:
-	litehtml::html_tag::ptr teletypePtr;
-	litehtml::elements_vector contents;
+	litehtml::elements_vector teletypeElements;
+	std::list<litehtml::elements_vector> teletypeElementsContents;
 
-	int charsToPrint;
 	double startTimeSec;
 public:
-	TeletypeExpansion(double startTimeSec) : charsToPrint(0), startTimeSec(startTimeSec) { }
+	TeletypeExpansion(double startTimeSec) : startTimeSec(startTimeSec) { }
 	
 	virtual void documentLoaded(Window& window);
 	virtual void render(Window& window);
