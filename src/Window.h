@@ -72,7 +72,6 @@ private:
 	litehtml::document::ptr document;
 	
 	DrawingState drawingState;
-	Font* currentSelectedFont;
 	
 	double cursorX, cursorY;
 private:

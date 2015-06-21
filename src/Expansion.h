@@ -17,6 +17,7 @@ class Expansion
 {
 public:
 	virtual void documentLoaded(Window& window) = 0;
+	virtual void render(Window& window) = 0;
 	virtual void draw(Window& window) = 0;
 	
 	virtual void cursorPosition(Window& window, double x, double y) = 0;

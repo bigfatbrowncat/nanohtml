@@ -109,19 +109,23 @@ void Window::draw()
 	
 	double t1 = glfwGetTime();
 	
-	document->render(winWidth);
-	
+
 	for (auto iter = expansions.begin(); iter != expansions.end(); iter++)
 	{
-		(*iter)->draw(*this);
+		(*iter)->render(*this);
 	}
-	
+	document->render(winWidth);
+
 	litehtml::position pos;
 	pos.x = 0;
 	pos.y = 0;
 	pos.width = winWidth;
 	pos.height = winHeight;
 	
+	for (auto iter = expansions.begin(); iter != expansions.end(); iter++)
+	{
+		(*iter)->draw(*this);
+	}
 	document->draw((litehtml::uint_ptr)NULL, 0, 0, &pos);
 	
 	finishDrawing();
@@ -301,7 +305,6 @@ litehtml::uint_ptr Window::create_font(const litehtml::tchar_t* faceName, int si
 	fm->height = lineh;
 	
 	Font* f = new Font(fontFile, size, +ascender+descender-lineh);
-	currentSelectedFont = f;
 	
 	return (litehtml::uint_ptr)f;
 }
@@ -314,12 +317,8 @@ void Window::delete_font(litehtml::uint_ptr hFont)
 int Window::text_width(const litehtml::tchar_t* text, litehtml::uint_ptr hFont)
 {
 	Font& f = *(Font*)hFont;
-	//if (currentSelectedFont != &f)
-	{
-		nvgFontFace(nvgContext, f.fontFace.c_str());
-		nvgFontSize(nvgContext, f.size * FONT_SCALE);
-		currentSelectedFont = &f;
-	}
+	nvgFontFace(nvgContext, f.fontFace.c_str());
+	nvgFontSize(nvgContext, f.size * FONT_SCALE);
 	
 	float bounds[4];
 	return (int)nvgTextBounds(nvgContext, 0, 0, text, NULL, bounds);
@@ -337,12 +336,8 @@ void Window::draw_text(litehtml::uint_ptr /*hdc*/, const litehtml::tchar_t* text
 	}
 	
 	Font& f = *(Font*)hFont;
-	//if (currentSelectedFont != &f)
-	{
-		nvgFontFace(nvgContext, f.fontFace.c_str());
-		nvgFontSize(nvgContext, f.size * FONT_SCALE);
-		currentSelectedFont = &f;
-	}
+	nvgFontFace(nvgContext, f.fontFace.c_str());
+	nvgFontSize(nvgContext, f.size * FONT_SCALE);
 	
 	nvgFillColor(nvgContext, nvgRGBA(color.red, color.green, color.blue, color.alpha));
 	nvgText(nvgContext, pos.left(), pos.top() - f.deltaY, text, NULL);
@@ -495,12 +490,11 @@ void Window::finishDrawing()
 	if (drawingState == dsText) {
 		// Filling in the previously written text
 		nvgFill(nvgContext);
-		currentSelectedFont = NULL;
 		drawingState = dsNone;
 	}
 }
 
-Window::Window() : drawingState(dsNone), currentSelectedFont(NULL)
+Window::Window() : drawingState(dsNone)
 {
 	initialize();
 	

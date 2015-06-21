@@ -25,6 +25,11 @@ void ScrollbarExpansion::documentLoaded(Window& window)
 	
 }
 
+void ScrollbarExpansion::render(Window& window)
+{
+	
+}
+
 void ScrollbarExpansion::draw(Window& window)
 {
 	// Neutralizing overscroll

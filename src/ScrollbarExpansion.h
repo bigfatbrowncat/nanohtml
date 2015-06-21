@@ -34,6 +34,7 @@ private:
 
 public:
 	virtual void documentLoaded(Window& window);
+	virtual void render(Window& window);
 	virtual void draw(Window& window);
 	
 	virtual void cursorPosition(Window& window, double x, double y);

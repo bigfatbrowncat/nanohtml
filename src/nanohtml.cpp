@@ -6,7 +6,9 @@
 
 #include "default_style.h"
 #include "Window.h"
+
 #include "ScrollbarExpansion.h"
+#include "TeletypeExpansion.h"
 
 #include "../src/el_div.h"
 
@@ -59,9 +61,11 @@ void freeFileBuffer(char* buffer) {
 int main()
 {
 	ScrollbarExpansion scrollbarExpansion;
+	TeletypeExpansion teletypeExpansion(glfwGetTime());
 	
 	Window windowHandler;
 	windowHandler.addExpansion(scrollbarExpansion);
+	windowHandler.addExpansion(teletypeExpansion);
 
 	char* htmlFile = allocBufferAndReadFile("demo.html");
 	if (htmlFile != NULL) {
