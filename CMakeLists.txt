@@ -16,10 +16,9 @@ set(SOURCES
 project (${PROJNAME})
 
 file(GLOB_RECURSE RESOURCES RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "res/*.*")
+file(GLOB_RECURSE RESOURCES_NO_RES RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}/res/" "res/*.*")
 
 IF (APPLE)
-
-	file(GLOB_RECURSE RESOURCES_NO_RES RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}/res/" "res/*.*")
 
 	foreach(item IN LISTS RESOURCES_NO_RES)
 		message(STATUS "Resource file: ${item}")
@@ -41,8 +40,8 @@ ELSE()
 	# we don't want to copy if we're building in the source dir
 	if (NOT CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
 
-		foreach(item IN LISTS RESOURCES)
-			message(STATUS ${item})
+		foreach(item IN LISTS RESOURCES_NO_RES)
+			message(STATUS "Resource file: ${item}")
 			add_custom_command(
 				OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/${item}"
 				COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_SOURCE_DIR}/res/${item}" "${CMAKE_CURRENT_BINARY_DIR}/${item}"
@@ -54,7 +53,7 @@ ELSE()
 	add_executable(
 		${PROJNAME}
 		${SOURCES}
-		${RESOURCES}
+		${RESOURCES_NO_RES}
 	)
 
 ENDIF(APPLE)
