@@ -6,6 +6,8 @@
 //
 //
 
+#include "default_style.h"
+
 #include "TeletypeExpansion.h"
 
 
@@ -42,7 +44,7 @@ void TeletypeExpansion::render(Window& window)
 			dt -= stod(std::string(startTime));
 		}
 		
-		int charsToPrint = fmax(0, dt * 20.0);
+		int charsToPrint = fmax(0, dt * 20);
 		
 		// Counting inners to print
 
@@ -60,10 +62,40 @@ void TeletypeExpansion::render(Window& window)
 			}
 			else if (p < charsToPrint)
 			{
-				litehtml::el_text::ptr inPtr = new litehtml::el_text(itemText.substr(0, charsToPrint - p).c_str(), window.getDocument());
+				litehtml::el_div::ptr wrapPtr = new litehtml::el_div(window.getDocument());
+				wrapPtr->set_tagName("div");
+				litehtml::el_div::ptr wrapPtr1 = new litehtml::el_div(window.getDocument());
+				wrapPtr1->set_tagName("div");
+				litehtml::el_div::ptr wrapPtr2 = new litehtml::el_div(window.getDocument());
+				wrapPtr2->set_tagName("div");
+
+				litehtml::el_text::ptr inPtr1 = new litehtml::el_text(itemText.substr(0, charsToPrint - p).c_str(), window.getDocument());
+				litehtml::el_text::ptr inPtr2 = new litehtml::el_text(itemText.substr(charsToPrint - p, itemText.length() - (charsToPrint - p)).c_str(), window.getDocument());
 				
-				teletypePtr->appendChild(inPtr);
-				inPtr->parse_styles();
+				wrapPtr1->appendChild(inPtr1);
+				wrapPtr2->appendChild(inPtr2);
+				
+				wrapPtr->appendChild(wrapPtr1);
+				wrapPtr->appendChild(wrapPtr2);
+
+				teletypePtr->appendChild(wrapPtr);
+
+				{
+					litehtml::media_query_list::ptr media;
+					litehtml::css css1, css2;
+					css1.parse_stylesheet("div { display: inline-block }", 0, 0, media);
+					css2.parse_stylesheet("div { visibility: hidden }", 0, 0, media);
+					css1.sort_selectors();
+					css2.sort_selectors();
+					wrapPtr->apply_stylesheet(css1);
+					wrapPtr2->apply_stylesheet(css2);
+				}
+
+
+/*				wrapPtr1->parse_styles();
+				wrapPtr2->parse_styles();*/
+				wrapPtr->parse_styles();
+
 				break;
 			}
 			else
