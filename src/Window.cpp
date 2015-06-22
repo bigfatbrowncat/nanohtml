@@ -460,7 +460,7 @@ void Window::del_clip()
 	
 }
 
-void Window::get_client_rect(litehtml::position& client)
+void Window::get_client_rect(litehtml::position& client) const
 {
     client.x = 0;
     client.y = 0;
@@ -473,7 +473,7 @@ litehtml::element* Window::create_element(const litehtml::tchar_t* tag_name, con
 	return NULL;
 }
 
-void Window::get_media_features(litehtml::media_features& media)
+void Window::get_media_features(litehtml::media_features& media) const
 {
     media.type = litehtml::media_type_screen;
     media.width = winWidth;
@@ -482,6 +482,11 @@ void Window::get_media_features(litehtml::media_features& media)
     media.device_height = fbHeight;
     media.color = 32;
     //media.resolution = ??
+}
+
+void Window::get_language(litehtml::tstring& language, litehtml::tstring & culture) const
+{
+    
 }
 
 void Window::finishDrawing()

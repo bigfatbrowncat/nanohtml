@@ -110,9 +110,11 @@ private:
 	virtual void import_css(litehtml::tstring& text, const litehtml::tstring& url, litehtml::tstring& baseurl);
 	virtual void set_clip(const litehtml::position& pos, const litehtml::border_radiuses& bdr_radius, bool valid_x, bool valid_y);
 	virtual void del_clip();
-	virtual void get_client_rect(litehtml::position& client);
+    
+	virtual void get_client_rect(litehtml::position& client) const;
 	virtual litehtml::element* create_element(const litehtml::tchar_t* tag_name, const litehtml::string_map& attributes, litehtml::document* doc);
-	virtual void get_media_features(litehtml::media_features& media);
+	virtual void get_media_features(litehtml::media_features& media) const;
+    virtual void get_language(litehtml::tstring& language, litehtml::tstring & culture) const;
 	
 	void finishDrawing();
 	
