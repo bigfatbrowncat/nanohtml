@@ -22,6 +22,8 @@ private:
 	litehtml::elements_vector teletypeElements;
 	std::list<litehtml::elements_vector> teletypeElementsContents;
 
+	std::list<litehtml::el_div::ptr> wrappers;
+	
 	double startTimeSec;
 public:
 	TeletypeExpansion(double startTimeSec) : startTimeSec(startTimeSec) { }

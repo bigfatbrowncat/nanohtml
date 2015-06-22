@@ -26,6 +26,8 @@ void TeletypeExpansion::documentLoaded(Window& window)
 		
 		litehtml::elements_vector contents = tag->children();
 		teletypeElementsContents.push_back(contents);
+		wrappers.push_back(NULL);
+		
 		tag->children().clear();
 	}
 }
@@ -33,7 +35,8 @@ void TeletypeExpansion::documentLoaded(Window& window)
 void TeletypeExpansion::render(Window& window)
 {
 	auto contents = teletypeElementsContents.begin();
-	for (auto teletypeItem = teletypeElements.begin(); teletypeItem != teletypeElements.end(); teletypeItem++, contents++)
+	auto wrapper = wrappers.begin();
+	for (auto teletypeItem = teletypeElements.begin(); teletypeItem != teletypeElements.end(); teletypeItem++, contents++, wrapper++)
 	{
 		litehtml::html_tag* teletypePtr = ((litehtml::html_tag*)(litehtml::element*)(*teletypeItem));
 		
@@ -57,13 +60,23 @@ void TeletypeExpansion::render(Window& window)
 			
 			if (p + itemText.length() < charsToPrint)
 			{
+				if ((*wrapper) != NULL)
+				{
+					(*wrapper)->clearRecursive();
+				}
+
 				teletypePtr->appendChild(*item);
 				p += itemText.length();
 			}
 			else if (p < charsToPrint)
 			{
-				litehtml::el_div::ptr wrapPtr = new litehtml::el_div(window.getDocument());
-				wrapPtr->set_tagName("div");
+				if ((*wrapper) != NULL)
+				{
+					(*wrapper)->clearRecursive();
+				}
+
+				*wrapper = new litehtml::el_div(window.getDocument());
+				(*wrapper)->set_tagName("div");
 				litehtml::el_div::ptr wrapPtr1 = new litehtml::el_div(window.getDocument());
 				wrapPtr1->set_tagName("div");
 				litehtml::el_div::ptr wrapPtr2 = new litehtml::el_div(window.getDocument());
@@ -71,30 +84,43 @@ void TeletypeExpansion::render(Window& window)
 
 				litehtml::el_text::ptr inPtr1 = new litehtml::el_text(itemText.substr(0, charsToPrint - p).c_str(), window.getDocument());
 				litehtml::el_text::ptr inPtr2 = new litehtml::el_text(itemText.substr(charsToPrint - p, itemText.length() - (charsToPrint - p)).c_str(), window.getDocument());
-				
+
 				wrapPtr1->appendChild(inPtr1);
 				wrapPtr2->appendChild(inPtr2);
 				
-				wrapPtr->appendChild(wrapPtr1);
-				wrapPtr->appendChild(wrapPtr2);
+				(*wrapper)->appendChild(wrapPtr1);
+				(*wrapper)->appendChild(wrapPtr2);
 
-				teletypePtr->appendChild(wrapPtr);
+				teletypePtr->appendChild(*wrapper);
 
 				{
 					litehtml::media_query_list::ptr media;
-					litehtml::css css1, css2;
+					litehtml::css css, css1, css2;
+					
+					css.parse_stylesheet(DEFAULT_STYLESHEET, 0, 0, media);
 					css1.parse_stylesheet("div { display: inline-block }", 0, 0, media);
 					css2.parse_stylesheet("div { visibility: hidden }", 0, 0, media);
+					
+					css.sort_selectors();
 					css1.sort_selectors();
 					css2.sort_selectors();
-					wrapPtr->apply_stylesheet(css1);
+
+					(*wrapper)->apply_stylesheet(css);
+					wrapPtr1->apply_stylesheet(css);
+					wrapPtr2->apply_stylesheet(css);
+
+					(*wrapper)->apply_stylesheet(css1);
 					wrapPtr2->apply_stylesheet(css2);
 				}
 
-
+				(*wrapper)->parse_styles();
 /*				wrapPtr1->parse_styles();
-				wrapPtr2->parse_styles();*/
-				wrapPtr->parse_styles();
+				wrapPtr2->parse_styles();
+				inPtr1->parse_styles();
+				inPtr2->parse_styles();*/
+
+/*				inPtr1->on_mouse_over();
+				inPtr2->on_mouse_over();*/
 
 				break;
 			}
