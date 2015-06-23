@@ -14,7 +14,7 @@
 
 using namespace litehtml;
 
-char* allocBufferAndReadFile(char* fileName) {
+char* allocBufferAndReadFile(const char* fileName) {
 	FILE *fp;
 	long lSize;
 	char *buffer;

@@ -43,8 +43,15 @@ void TeletypeExpansion::render(Window& window)
 		{
 			dt -= stod(std::string(startTime));
 		}
+
+		double velocity = 20;
+		const char* velocityStr = teletypePtr->get_style_property("teletype-velocity", true);
+		if (velocityStr != NULL)
+		{
+			velocity = stod(std::string(velocityStr));
+		}
 		
-		int charsToPrint = fmax(0, dt * 20);
+		int charsToPrint = fmax(0, dt * velocity);
 		
 		// Counting inners to print
 
